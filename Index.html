@@ -1,0 +1,1062 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Daily Ledger — Personal Calendar</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&family=Source+Serif+4:ital,opsz,wght@0,8..60,300;0,8..60,400;0,8..60,600;1,8..60,300;1,8..60,400&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #0f0e0c;
+    --ink-muted: #4a4640;
+    --ink-faint: #9a948e;
+    --paper: #f5f2ec;
+    --paper-dark: #ede9e0;
+    --paper-mid: #e8e3d8;
+    --rule: #c8c0b0;
+    --rule-heavy: #7a7060;
+    --accent: #8b1a1a;
+    --accent-muted: #c0392b;
+    --gold: #b5860d;
+    --column-gap: 2rem;
+    --serif: 'Playfair Display', Georgia, serif;
+    --body: 'Source Serif 4', Georgia, serif;
+    --mono: 'IBM Plex Mono', monospace;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--body);
+    font-size: 15px;
+    line-height: 1.65;
+    min-height: 100vh;
+  }
+
+  /* ─── MASTHEAD ─────────────────────────────────────────────── */
+  .masthead {
+    border-bottom: 3px double var(--ink);
+    padding: 1rem 2rem 0.75rem;
+    text-align: center;
+    background: var(--paper);
+    position: relative;
+  }
+  .masthead-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-muted);
+    border-bottom: 1px solid var(--rule-heavy);
+    padding-bottom: 0.4rem;
+    margin-bottom: 0.5rem;
+  }
+  .masthead-title {
+    font-family: var(--serif);
+    font-size: clamp(2.8rem, 7vw, 5.5rem);
+    font-weight: 900;
+    letter-spacing: -0.02em;
+    line-height: 0.9;
+    color: var(--ink);
+    margin: 0.2rem 0;
+    text-transform: uppercase;
+  }
+  .masthead-subtitle {
+    font-family: var(--body);
+    font-size: 12px;
+    font-style: italic;
+    color: var(--ink-muted);
+    letter-spacing: 0.12em;
+    border-top: 1px solid var(--rule-heavy);
+    padding-top: 0.4rem;
+    margin-top: 0.3rem;
+  }
+
+  /* ─── NAV BAR ──────────────────────────────────────────────── */
+  .nav-bar {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    padding: 0 2rem;
+    border-bottom: 2px solid var(--ink);
+    background: var(--ink);
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .nav-bar::-webkit-scrollbar { display: none; }
+  .nav-btn {
+    flex: 0 0 auto;
+    background: none;
+    border: none;
+    color: var(--paper);
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 0.55rem 1rem;
+    cursor: pointer;
+    position: relative;
+    white-space: nowrap;
+    border-right: 1px solid rgba(245,242,236,0.15);
+    transition: background 0.15s;
+  }
+  .nav-btn:hover { background: rgba(245,242,236,0.1); }
+  .nav-btn.active {
+    background: var(--paper);
+    color: var(--ink);
+    font-weight: 500;
+  }
+  .nav-btn.today-marker::after {
+    content: '●';
+    display: inline-block;
+    margin-left: 5px;
+    color: var(--accent-muted);
+    font-size: 8px;
+  }
+  .nav-arrows {
+    margin-left: auto;
+    display: flex;
+    gap: 0;
+    flex-shrink: 0;
+  }
+  .arrow-btn {
+    background: none;
+    border: none;
+    border-left: 1px solid rgba(245,242,236,0.15);
+    color: var(--paper);
+    font-size: 16px;
+    padding: 0.5rem 1rem;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .arrow-btn:hover { background: rgba(245,242,236,0.1); }
+
+  /* ─── MAIN LAYOUT ──────────────────────────────────────────── */
+  .page-layout {
+    display: grid;
+    grid-template-columns: 1fr 320px;
+    gap: 0;
+    max-width: 1200px;
+    margin: 0 auto;
+    min-height: calc(100vh - 180px);
+  }
+
+  .main-column {
+    border-right: 1px solid var(--rule);
+    padding: 2rem;
+  }
+
+  .sidebar {
+    padding: 1.5rem 1.25rem;
+    background: var(--paper);
+  }
+
+  /* ─── DAY HEADER ───────────────────────────────────────────── */
+  .day-header {
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid var(--ink);
+  }
+  .day-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--ink-muted);
+    margin-bottom: 0.2rem;
+  }
+  .day-date {
+    font-family: var(--serif);
+    font-size: clamp(2.2rem, 5vw, 3.8rem);
+    font-weight: 900;
+    line-height: 1;
+    color: var(--ink);
+  }
+  .day-full-date {
+    font-family: var(--body);
+    font-size: 13px;
+    color: var(--ink-muted);
+    font-style: italic;
+    margin-top: 0.2rem;
+  }
+  .day-tag {
+    display: inline-block;
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 3px 8px;
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    margin-top: 0.5rem;
+  }
+  .day-tag.rest-tag {
+    border-color: var(--gold);
+    color: var(--gold);
+  }
+
+  /* ─── CONTENT SECTIONS ─────────────────────────────────────── */
+  .section-rule {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin: 1.5rem 0 0.75rem;
+  }
+  .section-rule span {
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--ink-muted);
+    white-space: nowrap;
+  }
+  .section-rule::before, .section-rule::after {
+    content: '';
+    height: 1px;
+    background: var(--rule);
+    flex: 1;
+  }
+  .section-rule::before { max-width: 20px; }
+
+  /* ─── GYM SECTION ──────────────────────────────────────────── */
+  .gym-card {
+    background: var(--paper-dark);
+    border: 1px solid var(--rule);
+    border-left: 3px solid var(--accent);
+    padding: 1rem 1.25rem;
+    margin-bottom: 1rem;
+  }
+  .gym-headline {
+    font-family: var(--serif);
+    font-size: 1.3rem;
+    font-weight: 700;
+    line-height: 1.2;
+    margin-bottom: 0.3rem;
+  }
+  .gym-subline {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-muted);
+    margin-bottom: 0.75rem;
+  }
+  .exercise-list {
+    list-style: none;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4px 1.5rem;
+  }
+  .exercise-list li {
+    font-size: 13px;
+    color: var(--ink-muted);
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+  }
+  .exercise-list li::before {
+    content: '—';
+    color: var(--rule-heavy);
+    font-size: 10px;
+    flex-shrink: 0;
+  }
+  .exercise-name { color: var(--ink); font-weight: 400; }
+  .exercise-sets {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--ink-faint);
+    flex-shrink: 0;
+    margin-left: auto;
+  }
+  .rest-card {
+    background: var(--paper-dark);
+    border: 1px solid var(--rule);
+    border-left: 3px solid var(--gold);
+    padding: 1rem 1.25rem;
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: 1.1rem;
+    color: var(--ink-muted);
+  }
+
+  /* ─── NOTES SECTION ────────────────────────────────────────── */
+  .notes-area {
+    position: relative;
+    margin-top: 0.5rem;
+  }
+  .notes-textarea {
+    width: 100%;
+    min-height: 200px;
+    background: var(--paper-dark);
+    border: 1px solid var(--rule);
+    border-top: none;
+    padding: 1rem;
+    font-family: var(--body);
+    font-size: 14px;
+    line-height: 1.8;
+    color: var(--ink);
+    resize: vertical;
+    outline: none;
+    transition: border-color 0.2s;
+    background-image: repeating-linear-gradient(
+      transparent,
+      transparent 28px,
+      var(--rule) 28px,
+      var(--rule) 29px
+    );
+    background-position: 0 1.8rem;
+  }
+  .notes-textarea:focus { border-color: var(--rule-heavy); }
+  .notes-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--ink);
+    color: var(--paper);
+    padding: 0.4rem 1rem;
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+  .save-btn {
+    background: none;
+    border: 1px solid rgba(245,242,236,0.4);
+    color: var(--paper);
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 3px 10px;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .save-btn:hover { background: rgba(245,242,236,0.15); }
+  .save-status {
+    font-family: var(--mono);
+    font-size: 9px;
+    color: var(--ink-faint);
+    margin-top: 0.3rem;
+    text-align: right;
+    letter-spacing: 0.05em;
+    min-height: 1.2em;
+  }
+
+  /* ─── SIDEBAR ──────────────────────────────────────────────── */
+  .sidebar-section {
+    margin-bottom: 1.5rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid var(--rule);
+  }
+  .sidebar-section:last-child { border-bottom: none; }
+  .sidebar-heading {
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--ink-muted);
+    margin-bottom: 0.75rem;
+    padding-bottom: 0.35rem;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  /* Mini calendar */
+  .mini-cal {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+  }
+  .mini-cal th {
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 0.1em;
+    text-align: center;
+    color: var(--ink-muted);
+    padding: 4px 2px;
+    font-weight: 400;
+  }
+  .mini-cal td {
+    text-align: center;
+    padding: 4px 2px;
+    cursor: pointer;
+    font-family: var(--body);
+    border-radius: 2px;
+    transition: background 0.1s;
+  }
+  .mini-cal td:hover { background: var(--paper-mid); }
+  .mini-cal td.today-cell {
+    background: var(--ink);
+    color: var(--paper);
+    border-radius: 2px;
+  }
+  .mini-cal td.selected-cell {
+    outline: 1.5px solid var(--accent);
+    color: var(--accent);
+  }
+  .mini-cal td.other-month { color: var(--ink-faint); }
+  .mini-cal td.rest-day { color: var(--gold); }
+  .cal-nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+  }
+  .cal-nav button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--ink-muted);
+    font-size: 14px;
+    padding: 2px 6px;
+    transition: color 0.15s;
+  }
+  .cal-nav button:hover { color: var(--ink); }
+  .cal-month-label {
+    font-family: var(--serif);
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--ink);
+  }
+
+  /* Week plan */
+  .week-plan-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 5px 0;
+    border-bottom: 1px solid var(--paper-mid);
+    font-size: 12px;
+  }
+  .week-plan-row:last-child { border-bottom: none; }
+  .week-plan-day {
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-muted);
+    width: 28px;
+  }
+  .week-plan-muscle {
+    color: var(--ink);
+    flex: 1;
+    margin: 0 0.5rem;
+    font-size: 12px;
+  }
+  .week-plan-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--rule-heavy);
+    flex-shrink: 0;
+  }
+  .week-plan-dot.active { background: var(--accent); }
+  .week-plan-dot.rest { background: var(--gold); }
+
+  /* Quote / date facts */
+  .sidebar-quote {
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: 13px;
+    line-height: 1.6;
+    color: var(--ink-muted);
+    border-left: 2px solid var(--accent);
+    padding-left: 0.75rem;
+    margin: 0;
+  }
+
+  /* Motivational streak */
+  .streak-display {
+    text-align: center;
+    padding: 0.75rem;
+    background: var(--paper-dark);
+    border: 1px solid var(--rule);
+  }
+  .streak-number {
+    font-family: var(--serif);
+    font-size: 2.5rem;
+    font-weight: 900;
+    color: var(--accent);
+    line-height: 1;
+  }
+  .streak-label {
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--ink-muted);
+    margin-top: 0.2rem;
+  }
+  .streak-dots {
+    display: flex;
+    gap: 4px;
+    justify-content: center;
+    margin-top: 0.5rem;
+  }
+  .streak-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--rule);
+  }
+  .streak-dot.filled { background: var(--accent); }
+
+  /* Footer */
+  footer {
+    border-top: 3px double var(--ink);
+    padding: 0.75rem 2rem;
+    display: flex;
+    justify-content: space-between;
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--ink-faint);
+    letter-spacing: 0.08em;
+  }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .page-layout { grid-template-columns: 1fr; }
+    .sidebar { border-top: 1px solid var(--rule); }
+    .exercise-list { grid-template-columns: 1fr; }
+    .masthead { padding: 0.75rem 1rem 0.5rem; }
+    .main-column { padding: 1.25rem; }
+  }
+</style>
+</head>
+<body>
+
+<!-- MASTHEAD -->
+<header class="masthead">
+  <div class="masthead-meta">
+    <span id="meta-edition">Vol. I — Personal Edition</span>
+    <span id="meta-date-short">Loading…</span>
+    <span id="meta-price">Est. — Today</span>
+  </div>
+  <h1 class="masthead-title">The Daily Ledger</h1>
+  <p class="masthead-subtitle">Your Personal Chronicle of Days &amp; Discipline</p>
+</header>
+
+<!-- NAV BAR -->
+<nav class="nav-bar" id="nav-bar">
+  <div class="nav-arrows">
+    <button class="arrow-btn" id="prev-week" title="Previous week">&#8592;</button>
+    <button class="arrow-btn" id="next-week" title="Next week">&#8594;</button>
+  </div>
+</nav>
+
+<!-- MAIN LAYOUT -->
+<div class="page-layout">
+  <main class="main-column" id="main-column">
+    <!-- Injected by JS -->
+  </main>
+
+  <aside class="sidebar" id="sidebar">
+    <!-- Injected by JS -->
+  </aside>
+</div>
+
+<footer>
+  <span>The Daily Ledger — Personal Calendar System</span>
+  <span>All data stored locally. No cloud. No tracking.</span>
+  <span id="footer-date"></span>
+</footer>
+
+<script>
+// ── DATA & CONSTANTS ─────────────────────────────────────────────────────────
+
+const DAYS = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+const DAYS_SHORT = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+const MONTHS_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+// Gym plan: 6-day split with rotation each week
+// Week A and Week B alternate for muscle group variety
+const GYM_PLANS = {
+  A: {
+    0: null, // Sunday = rest
+    1: {
+      name: 'Push — Chest & Shoulders',
+      focus: 'Horizontal + Vertical Press',
+      exercises: [
+        {name:'Barbell Bench Press', sets:'4×6–8'},
+        {name:'Incline Dumbbell Press', sets:'3×10–12'},
+        {name:'Overhead Barbell Press', sets:'4×6–8'},
+        {name:'Lateral Raises', sets:'3×15–20'},
+        {name:'Cable Fly', sets:'3×12–15'},
+        {name:'Tricep Pushdowns', sets:'3×12–15'},
+      ]
+    },
+    2: {
+      name: 'Pull — Back & Biceps',
+      focus: 'Vertical + Horizontal Pull',
+      exercises: [
+        {name:'Deadlift', sets:'4×4–6'},
+        {name:'Weighted Pull-Ups', sets:'4×6–8'},
+        {name:'Barbell Row', sets:'4×8–10'},
+        {name:'Face Pulls', sets:'3×15–20'},
+        {name:'Hammer Curl', sets:'3×12'},
+        {name:'Incline Dumbbell Curl', sets:'3×12'},
+      ]
+    },
+    3: {
+      name: 'Legs — Quad Focus',
+      focus: 'Knee-Dominant + Calves',
+      exercises: [
+        {name:'Barbell Back Squat', sets:'5×5'},
+        {name:'Leg Press', sets:'4×10–12'},
+        {name:'Bulgarian Split Squat', sets:'3×10 ea.'},
+        {name:'Leg Extension', sets:'3×15'},
+        {name:'Standing Calf Raise', sets:'5×15'},
+        {name:'Seated Calf Raise', sets:'3×20'},
+      ]
+    },
+    4: {
+      name: 'Push — Shoulders & Triceps',
+      focus: 'Overhead + Isolation',
+      exercises: [
+        {name:'Seated DB Press', sets:'4×8–10'},
+        {name:'Arnold Press', sets:'3×10–12'},
+        {name:'Front Raise', sets:'3×12'},
+        {name:'Lateral Raises', sets:'4×15–20'},
+        {name:'Skull Crushers', sets:'3×12'},
+        {name:'Overhead Tricep Ext.', sets:'3×12'},
+      ]
+    },
+    5: {
+      name: 'Pull — Lats & Rear Delts',
+      focus: 'Width + Posterior Chain',
+      exercises: [
+        {name:'Wide-Grip Pull-Down', sets:'4×10–12'},
+        {name:'Seated Cable Row', sets:'4×10–12'},
+        {name:'Single-Arm DB Row', sets:'3×10 ea.'},
+        {name:'Reverse Pec Deck', sets:'3×15–20'},
+        {name:'Barbell Curl', sets:'3×10'},
+        {name:'Preacher Curl', sets:'3×12'},
+      ]
+    },
+    6: {
+      name: 'Legs — Hamstring & Glute',
+      focus: 'Hip-Dominant + Core',
+      exercises: [
+        {name:'Romanian Deadlift', sets:'4×8–10'},
+        {name:'Hip Thrust', sets:'4×10–12'},
+        {name:'Leg Curl', sets:'4×12–15'},
+        {name:'Sumo Squat', sets:'3×12'},
+        {name:'Cable Kick-Back', sets:'3×15 ea.'},
+        {name:'Plank Hold', sets:'3×60s'},
+      ]
+    },
+  },
+  B: {
+    0: null, // Sunday = rest
+    1: {
+      name: 'Push — Chest & Triceps',
+      focus: 'Chest Dominant',
+      exercises: [
+        {name:'Incline Barbell Press', sets:'4×6–8'},
+        {name:'Flat Dumbbell Press', sets:'3×10–12'},
+        {name:'Cable Crossover', sets:'3×15'},
+        {name:'Dips (weighted)', sets:'3×8–10'},
+        {name:'Close-Grip Bench Press', sets:'3×10'},
+        {name:'Overhead Tricep Ext.', sets:'3×12'},
+      ]
+    },
+    2: {
+      name: 'Pull — Traps & Biceps',
+      focus: 'Back Thickness',
+      exercises: [
+        {name:'Barbell Row (pronated)', sets:'4×6–8'},
+        {name:'T-Bar Row', sets:'4×8–10'},
+        {name:'Shrugs', sets:'4×15'},
+        {name:'Straight-Arm Pushdown', sets:'3×12'},
+        {name:'EZ-Bar Curl', sets:'4×10'},
+        {name:'Concentration Curl', sets:'3×12 ea.'},
+      ]
+    },
+    3: {
+      name: 'Legs — Glute & Hamstring',
+      focus: 'Posterior Chain First',
+      exercises: [
+        {name:'Romanian Deadlift', sets:'4×8–10'},
+        {name:'Hip Thrust', sets:'5×10–12'},
+        {name:'Leg Curl', sets:'4×12'},
+        {name:'Walking Lunge', sets:'3×12 ea.'},
+        {name:'Donkey Calf Raise', sets:'5×15'},
+        {name:'Ab Wheel Rollout', sets:'3×10'},
+      ]
+    },
+    4: {
+      name: 'Push — Shoulders',
+      focus: 'Full Delt Development',
+      exercises: [
+        {name:'Military Press (standing)', sets:'5×5'},
+        {name:'Lateral Raises', sets:'5×20'},
+        {name:'Rear Delt Fly', sets:'4×15'},
+        {name:'Upright Row', sets:'3×12'},
+        {name:'Cable Lateral Raise', sets:'3×15 ea.'},
+        {name:'Tricep Dip Machine', sets:'3×12'},
+      ]
+    },
+    5: {
+      name: 'Pull — Lats & Biceps',
+      focus: 'Back Width',
+      exercises: [
+        {name:'Weighted Chin-Ups', sets:'4×6–8'},
+        {name:'Lat Pulldown (close grip)', sets:'4×10'},
+        {name:'Cable Face Pull', sets:'4×15'},
+        {name:'Pendlay Row', sets:'3×8'},
+        {name:'Spider Curl', sets:'3×12'},
+        {name:'Cable Curl', sets:'3×15'},
+      ]
+    },
+    6: {
+      name: 'Legs — Quad & Core',
+      focus: 'Squat + Stabilizers',
+      exercises: [
+        {name:'Front Squat', sets:'4×6–8'},
+        {name:'Hack Squat', sets:'4×10'},
+        {name:'Leg Extension', sets:'4×15'},
+        {name:'Sissy Squat', sets:'3×12'},
+        {name:'Standing Calf Raise', sets:'5×15'},
+        {name:'Dragon Flag', sets:'3×8'},
+      ]
+    },
+  }
+};
+
+// ── STATE ────────────────────────────────────────────────────────────────────
+const today = new Date();
+today.setHours(0,0,0,0);
+
+let selectedDate = new Date(today);
+let navWeekStart = getWeekStart(today);
+let miniCalDate = new Date(today.getFullYear(), today.getMonth(), 1);
+
+function getWeekStart(d) {
+  const day = new Date(d);
+  const diff = day.getDay(); // 0 = Sun
+  day.setDate(day.getDate() - diff);
+  day.setHours(0,0,0,0);
+  return day;
+}
+
+function dateKey(d) {
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+function getGymPlan(d) {
+  // Determine week number from an epoch reference to alternate A/B
+  const ref = new Date(2024, 0, 7); // A reference Sunday
+  ref.setHours(0,0,0,0);
+  const ms = d - ref;
+  const weeks = Math.floor(ms / (7 * 24 * 3600 * 1000));
+  const plan = weeks % 2 === 0 ? 'A' : 'B';
+  const dow = d.getDay();
+  return { plan, workout: GYM_PLANS[plan][dow], isRest: dow === 0 };
+}
+
+function saveNote(d, text) {
+  const key = 'dl_note_' + dateKey(d);
+  localStorage.setItem(key, text);
+}
+
+function loadNote(d) {
+  return localStorage.getItem('dl_note_' + dateKey(d)) || '';
+}
+
+function getStreak() {
+  let streak = 0;
+  const d = new Date(today);
+  for (let i = 0; i < 30; i++) {
+    const note = localStorage.getItem('dl_note_' + dateKey(d));
+    if (note && note.trim().length > 0) {
+      streak++;
+      d.setDate(d.getDate() - 1);
+    } else {
+      break;
+    }
+  }
+  return streak;
+}
+
+// ── RENDER FUNCTIONS ─────────────────────────────────────────────────────────
+
+function renderNav() {
+  const bar = document.getElementById('nav-bar');
+  // Remove all nav-btn elements
+  bar.querySelectorAll('.nav-btn').forEach(b => b.remove());
+
+  const arrows = bar.querySelector('.nav-arrows');
+
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(navWeekStart);
+    d.setDate(d.getDate() + i);
+    const isToday = dateKey(d) === dateKey(today);
+    const isSelected = dateKey(d) === dateKey(selectedDate);
+
+    const btn = document.createElement('button');
+    btn.className = 'nav-btn' + (isSelected ? ' active' : '') + (isToday ? ' today-marker' : '');
+    btn.innerHTML = `${DAYS_SHORT[d.getDay()]}<br><span style="font-size:12px;font-weight:500">${d.getDate()}</span>`;
+    btn.style.lineHeight = '1.3';
+    btn.dataset.date = dateKey(d);
+    btn.addEventListener('click', () => {
+      selectedDate = new Date(d);
+      renderAll();
+    });
+    bar.insertBefore(btn, arrows);
+  }
+}
+
+function renderMain() {
+  const main = document.getElementById('main-column');
+  const d = selectedDate;
+  const gym = getGymPlan(d);
+  const savedNote = loadNote(d);
+  const isToday = dateKey(d) === dateKey(today);
+
+  const tagHTML = gym.isRest
+    ? `<span class="day-tag rest-tag">Rest Day</span>`
+    : `<span class="day-tag">Training Day — Week ${gym.plan}</span>`;
+
+  let gymHTML = '';
+  if (gym.isRest) {
+    gymHTML = `<div class="rest-card">
+      <strong style="font-style:normal;font-family:var(--serif)">Rest &amp; Recovery.</strong>
+      Today is a rest day. Allow your muscles to recover and grow. Consider light walking, stretching, or mobility work. Eat well. Sleep deeply.
+    </div>`;
+  } else if (gym.workout) {
+    const exItems = gym.workout.exercises.map(ex =>
+      `<li><span class="exercise-name">${ex.name}</span><span class="exercise-sets">${ex.sets}</span></li>`
+    ).join('');
+    gymHTML = `<div class="gym-card">
+      <div class="gym-headline">${gym.workout.name}</div>
+      <div class="gym-subline">${gym.workout.focus} &mdash; Plan ${gym.plan}</div>
+      <ul class="exercise-list">${exItems}</ul>
+    </div>`;
+  }
+
+  const todayBadge = isToday ? `<span style="font-family:var(--mono);font-size:9px;letter-spacing:0.1em;background:var(--accent);color:var(--paper);padding:2px 8px;margin-left:8px;">TODAY</span>` : '';
+
+  main.innerHTML = `
+    <div class="day-header">
+      <div class="day-label">${DAYS[d.getDay()]}${todayBadge}</div>
+      <div class="day-date">${String(d.getDate()).padStart(2,'0')} ${MONTHS_SHORT[d.getMonth()]}</div>
+      <div class="day-full-date">${MONTHS[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}</div>
+      ${tagHTML}
+    </div>
+
+    <div class="section-rule"><span>Training Programme</span></div>
+    ${gymHTML}
+
+    <div class="section-rule"><span>Daily Chronicle &mdash; Notes &amp; Observations</span></div>
+    <div class="notes-area">
+      <div class="notes-header">
+        <span>Personal Log</span>
+        <button class="save-btn" id="save-btn">Save Entry</button>
+      </div>
+      <textarea class="notes-textarea" id="notes-textarea" placeholder="Record your thoughts, tasks, meals, or reflections for the day…">${savedNote}</textarea>
+      <div class="save-status" id="save-status">${savedNote ? 'Entry saved.' : 'Unsaved.'}</div>
+    </div>
+  `;
+
+  document.getElementById('save-btn').addEventListener('click', () => {
+    const text = document.getElementById('notes-textarea').value;
+    saveNote(d, text);
+    const el = document.getElementById('save-status');
+    el.textContent = 'Saved at ' + new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+    el.style.color = 'var(--accent)';
+    setTimeout(() => { el.style.color = ''; }, 2000);
+    renderSidebar();
+  });
+
+  document.getElementById('notes-textarea').addEventListener('input', () => {
+    document.getElementById('save-status').textContent = 'Unsaved changes…';
+    document.getElementById('save-status').style.color = 'var(--gold)';
+  });
+
+  // Auto-save on date switch
+  document.getElementById('notes-textarea').addEventListener('blur', () => {
+    const text = document.getElementById('notes-textarea').value;
+    saveNote(d, text);
+    const el = document.getElementById('save-status');
+    if (el) { el.textContent = 'Auto-saved.'; el.style.color = ''; }
+  });
+}
+
+function renderSidebar() {
+  const sidebar = document.getElementById('sidebar');
+  const d = selectedDate;
+
+  // Mini calendar
+  const year = miniCalDate.getFullYear();
+  const month = miniCalDate.getMonth();
+  const firstDay = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const daysInPrevMonth = new Date(year, month, 0).getDate();
+
+  let calRows = '';
+  let dayCount = 1;
+  let nextMonthDay = 1;
+  let prevDay = daysInPrevMonth - firstDay + 1;
+
+  for (let row = 0; row < 6; row++) {
+    let rowHTML = '<tr>';
+    for (let col = 0; col < 7; col++) {
+      const cellIndex = row * 7 + col;
+      let cellDate, isOtherMonth = false;
+      if (cellIndex < firstDay) {
+        cellDate = new Date(year, month - 1, prevDay++);
+        isOtherMonth = true;
+      } else if (dayCount > daysInMonth) {
+        cellDate = new Date(year, month + 1, nextMonthDay++);
+        isOtherMonth = true;
+      } else {
+        cellDate = new Date(year, month, dayCount++);
+      }
+      const isToday2 = dateKey(cellDate) === dateKey(today);
+      const isSelected2 = dateKey(cellDate) === dateKey(d);
+      const isRest = cellDate.getDay() === 0;
+      let cls = '';
+      if (isToday2) cls = 'today-cell';
+      else if (isSelected2) cls = 'selected-cell';
+      else if (isOtherMonth) cls = 'other-month';
+      else if (isRest) cls = 'rest-day';
+
+      rowHTML += `<td class="${cls}" data-date="${dateKey(cellDate)}">${cellDate.getDate()}</td>`;
+    }
+    rowHTML += '</tr>';
+    calRows += rowHTML;
+    if (dayCount > daysInMonth && nextMonthDay > 1) break;
+  }
+
+  // Week plan overview
+  const weekPlanDays = [];
+  for (let i = 0; i < 7; i++) {
+    const wd = new Date(getWeekStart(d));
+    wd.setDate(wd.getDate() + i);
+    const gymDay = getGymPlan(wd);
+    const isCurrentDay = dateKey(wd) === dateKey(d);
+    const label = gymDay.isRest ? 'Rest' : (gymDay.workout ? gymDay.workout.name.split('—')[0].trim() : '—');
+    weekPlanDays.push({ dow: DAYS_SHORT[wd.getDay()], label, isRest: gymDay.isRest, active: isCurrentDay });
+  }
+
+  const weekPlanHTML = weekPlanDays.map(wp => `
+    <div class="week-plan-row">
+      <span class="week-plan-day">${wp.dow}</span>
+      <span class="week-plan-muscle" style="${wp.active ? 'color:var(--accent);font-weight:600' : ''}">${wp.label}</span>
+      <span class="week-plan-dot ${wp.active ? 'active' : wp.isRest ? 'rest' : ''}"></span>
+    </div>
+  `).join('');
+
+  // Streak
+  const streak = getStreak();
+  const streakDots = Array.from({length: 7}, (_, i) => {
+    const sd = new Date(today);
+    sd.setDate(sd.getDate() - (6 - i));
+    const note = localStorage.getItem('dl_note_' + dateKey(sd));
+    return `<span class="streak-dot ${note && note.trim() ? 'filled' : ''}"></span>`;
+  }).join('');
+
+  // Quotes rotation
+  const quotes = [
+    "The secret of getting ahead is getting started.",
+    "Discipline is the bridge between goals and accomplishment.",
+    "Do something today that your future self will thank you for.",
+    "Strength does not come from the body. It comes from the will of the soul.",
+    "Every champion was once a contender who refused to give up.",
+    "Train hard, eat right, live well.",
+    "The body achieves what the mind believes."
+  ];
+  const quoteIdx = (d.getDate() + d.getMonth()) % quotes.length;
+
+  sidebar.innerHTML = `
+    <div class="sidebar-section">
+      <div class="sidebar-heading">Calendar</div>
+      <div class="cal-nav">
+        <button id="cal-prev">&lsaquo;</button>
+        <span class="cal-month-label">${MONTHS_SHORT[month]} ${year}</span>
+        <button id="cal-next">&rsaquo;</button>
+      </div>
+      <table class="mini-cal">
+        <thead><tr>${DAYS_SHORT.map(d=>`<th>${d[0]}</th>`).join('')}</tr></thead>
+        <tbody>${calRows}</tbody>
+      </table>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-heading">This Week's Programme</div>
+      ${weekPlanHTML}
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-heading">Entry Streak</div>
+      <div class="streak-display">
+        <div class="streak-number">${streak}</div>
+        <div class="streak-label">consecutive days</div>
+        <div class="streak-dots">${streakDots}</div>
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-heading">Today's Dispatch</div>
+      <p class="sidebar-quote">${quotes[quoteIdx]}</p>
+    </div>
+  `;
+
+  // Mini cal clicks
+  sidebar.querySelectorAll('.mini-cal td[data-date]').forEach(cell => {
+    cell.addEventListener('click', () => {
+      const parts = cell.dataset.date.split('-');
+      selectedDate = new Date(parseInt(parts[0]), parseInt(parts[1])-1, parseInt(parts[2]));
+      navWeekStart = getWeekStart(selectedDate);
+      renderAll();
+    });
+  });
+
+  document.getElementById('cal-prev').addEventListener('click', () => {
+    miniCalDate = new Date(miniCalDate.getFullYear(), miniCalDate.getMonth() - 1, 1);
+    renderSidebar();
+  });
+  document.getElementById('cal-next').addEventListener('click', () => {
+    miniCalDate = new Date(miniCalDate.getFullYear(), miniCalDate.getMonth() + 1, 1);
+    renderSidebar();
+  });
+}
+
+function updateMasthead() {
+  const opts = { weekday:'long', year:'numeric', month:'long', day:'numeric' };
+  document.getElementById('meta-date-short').textContent = today.toLocaleDateString('en-GB', opts);
+  document.getElementById('footer-date').textContent = 'Session: ' + new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+  // Week number
+  const startOfYear = new Date(today.getFullYear(), 0, 1);
+  const weekNo = Math.ceil(((today - startOfYear) / 86400000 + startOfYear.getDay() + 1) / 7);
+  document.getElementById('meta-edition').textContent = `Week ${weekNo} — ${today.getFullYear()}`;
+}
+
+function renderAll() {
+  renderNav();
+  renderMain();
+  renderSidebar();
+}
+
+document.getElementById('prev-week').addEventListener('click', () => {
+  navWeekStart.setDate(navWeekStart.getDate() - 7);
+  selectedDate = new Date(navWeekStart);
+  renderAll();
+});
+document.getElementById('next-week').addEventListener('click', () => {
+  navWeekStart.setDate(navWeekStart.getDate() + 7);
+  selectedDate = new Date(navWeekStart);
+  renderAll();
+});
+
+// Init
+updateMasthead();
+renderAll();
+</script>
+</body>
+  </html>
