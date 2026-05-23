@@ -1,1062 +1,660 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="de">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>The Daily Ledger — Personal Calendar</title>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&family=Source+Serif+4:ital,opsz,wght@0,8..60,300;0,8..60,400;0,8..60,600;1,8..60,300;1,8..60,400&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<title>NIGHTPULSE — Shape Your Night</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
 <style>
   :root {
-    --ink: #0f0e0c;
-    --ink-muted: #4a4640;
-    --ink-faint: #9a948e;
-    --paper: #f5f2ec;
-    --paper-dark: #ede9e0;
-    --paper-mid: #e8e3d8;
-    --rule: #c8c0b0;
-    --rule-heavy: #7a7060;
-    --accent: #8b1a1a;
-    --accent-muted: #c0392b;
-    --gold: #b5860d;
-    --column-gap: 2rem;
-    --serif: 'Playfair Display', Georgia, serif;
-    --body: 'Source Serif 4', Georgia, serif;
-    --mono: 'IBM Plex Mono', monospace;
+    --bg: #080810;
+    --card: #0f0f1e;
+    --border: rgba(255,255,255,0.07);
+    --border-h: rgba(240,192,96,0.4);
+    --gold: #f0c060;
+    --gold2: #e8a830;
+    --text: #f0ede8;
+    --muted: #5a5870;
+    --accent: #7c6af5;
+    --green: #3ecf8e;
+    --red: #f05c5c;
   }
-
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
   body {
-    background: var(--paper);
-    color: var(--ink);
-    font-family: var(--body);
-    font-size: 15px;
-    line-height: 1.65;
-    min-height: 100vh;
+    background: var(--bg); color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh; overflow-x: hidden; cursor: none;
   }
 
-  /* ─── MASTHEAD ─────────────────────────────────────────────── */
-  .masthead {
-    border-bottom: 3px double var(--ink);
-    padding: 1rem 2rem 0.75rem;
-    text-align: center;
-    background: var(--paper);
-    position: relative;
-  }
-  .masthead-meta {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-family: var(--mono);
-    font-size: 10px;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--ink-muted);
-    border-bottom: 1px solid var(--rule-heavy);
-    padding-bottom: 0.4rem;
-    margin-bottom: 0.5rem;
-  }
-  .masthead-title {
-    font-family: var(--serif);
-    font-size: clamp(2.8rem, 7vw, 5.5rem);
-    font-weight: 900;
-    letter-spacing: -0.02em;
-    line-height: 0.9;
-    color: var(--ink);
-    margin: 0.2rem 0;
-    text-transform: uppercase;
-  }
-  .masthead-subtitle {
-    font-family: var(--body);
-    font-size: 12px;
-    font-style: italic;
-    color: var(--ink-muted);
-    letter-spacing: 0.12em;
-    border-top: 1px solid var(--rule-heavy);
-    padding-top: 0.4rem;
-    margin-top: 0.3rem;
-  }
+  /* ── CURSOR ── */
+  #cur { position: fixed; width: 10px; height: 10px; background: var(--gold); border-radius: 50%; pointer-events: none; z-index: 9999; transform: translate(-50%,-50%); mix-blend-mode: difference; }
+  #cur-r { position: fixed; width: 34px; height: 34px; border: 1px solid rgba(240,192,96,0.35); border-radius: 50%; pointer-events: none; z-index: 9998; transform: translate(-50%,-50%); transition: all 0.16s cubic-bezier(0.16,1,0.3,1); }
 
-  /* ─── NAV BAR ──────────────────────────────────────────────── */
-  .nav-bar {
-    display: flex;
-    align-items: center;
-    gap: 0;
-    padding: 0 2rem;
-    border-bottom: 2px solid var(--ink);
-    background: var(--ink);
-    overflow-x: auto;
-    scrollbar-width: none;
-  }
-  .nav-bar::-webkit-scrollbar { display: none; }
-  .nav-btn {
-    flex: 0 0 auto;
-    background: none;
-    border: none;
-    color: var(--paper);
-    font-family: var(--mono);
-    font-size: 10px;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    padding: 0.55rem 1rem;
-    cursor: pointer;
-    position: relative;
-    white-space: nowrap;
-    border-right: 1px solid rgba(245,242,236,0.15);
-    transition: background 0.15s;
-  }
-  .nav-btn:hover { background: rgba(245,242,236,0.1); }
-  .nav-btn.active {
-    background: var(--paper);
-    color: var(--ink);
-    font-weight: 500;
-  }
-  .nav-btn.today-marker::after {
-    content: '●';
-    display: inline-block;
-    margin-left: 5px;
-    color: var(--accent-muted);
-    font-size: 8px;
-  }
-  .nav-arrows {
-    margin-left: auto;
-    display: flex;
-    gap: 0;
-    flex-shrink: 0;
-  }
-  .arrow-btn {
-    background: none;
-    border: none;
-    border-left: 1px solid rgba(245,242,236,0.15);
-    color: var(--paper);
-    font-size: 16px;
-    padding: 0.5rem 1rem;
-    cursor: pointer;
-    transition: background 0.15s;
-  }
-  .arrow-btn:hover { background: rgba(245,242,236,0.1); }
+  /* ── NOISE ── */
+  body::before { content: ''; position: fixed; inset: 0; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E"); pointer-events: none; z-index: 1; opacity: 0.3; }
 
-  /* ─── MAIN LAYOUT ──────────────────────────────────────────── */
-  .page-layout {
-    display: grid;
-    grid-template-columns: 1fr 320px;
-    gap: 0;
-    max-width: 1200px;
-    margin: 0 auto;
-    min-height: calc(100vh - 180px);
-  }
+  /* ── INTRO ── */
+  #intro { position: fixed; inset: 0; z-index: 500; background: var(--bg); display: flex; align-items: center; justify-content: center; overflow: hidden; }
+  .i-grid { position: absolute; inset: 0; background-image: linear-gradient(rgba(240,192,96,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(240,192,96,0.04) 1px, transparent 1px); background-size: 60px 60px; animation: gPulse 4s ease-in-out infinite; }
+  @keyframes gPulse { 0%,100%{opacity:.5} 50%{opacity:1} }
+  .i-orb { position: absolute; border-radius: 50%; filter: blur(80px); pointer-events: none; }
+  .io1 { width:500px;height:500px;background:rgba(124,106,245,.18);top:-100px;right:-100px;animation:oFloat 8s ease-in-out infinite; }
+  .io2 { width:400px;height:400px;background:rgba(240,192,96,.12);bottom:-80px;left:-80px;animation:oFloat 10s ease-in-out infinite reverse; }
+  @keyframes oFloat { 0%,100%{transform:translate(0,0)} 33%{transform:translate(30px,-20px)} 66%{transform:translate(-20px,30px)} }
+  .i-content { position:relative;z-index:2;text-align:center;display:flex;flex-direction:column;align-items:center; }
+  .i-eye { font-size:11px;letter-spacing:.35em;color:var(--gold);opacity:0;transform:translateY(20px);animation:rUp .6s cubic-bezier(.16,1,.3,1) .3s forwards;margin-bottom:16px; }
+  .i-title { font-family:'Syne',sans-serif;font-size:clamp(60px,12vw,120px);font-weight:800;line-height:.9;letter-spacing:-.03em;overflow:hidden; }
+  .i-title .w { display:block;opacity:0;transform:translateY(100%);animation:wRev .8s cubic-bezier(.16,1,.3,1) forwards; }
+  .i-title .w:nth-child(1){animation-delay:.5s;color:var(--text)}
+  .i-title .w:nth-child(2){animation-delay:.75s;color:var(--gold)}
+  .i-sub { font-size:15px;font-weight:300;color:var(--muted);letter-spacing:.08em;opacity:0;transform:translateY(20px);animation:rUp .6s cubic-bezier(.16,1,.3,1) 1.2s forwards;margin-top:28px; }
+  .i-bar-w { width:200px;height:1px;background:rgba(255,255,255,.08);margin-top:40px;position:relative;overflow:hidden;opacity:0;animation:rUp 0s 1.4s forwards; }
+  .i-bar-f { position:absolute;left:0;top:0;height:100%;background:linear-gradient(90deg,var(--gold),var(--accent));width:0;animation:bLoad 1.6s cubic-bezier(.4,0,.2,1) 1.5s forwards; }
+  @keyframes bLoad{to{width:100%}}
+  .i-load { font-size:10px;letter-spacing:.3em;color:var(--muted);opacity:0;margin-top:14px;animation:rUp .5s ease 1.5s forwards; }
+  @keyframes rUp { to{opacity:1;transform:translateY(0)} }
+  @keyframes wRev { to{opacity:1;transform:translateY(0)} }
+  #intro.exit { animation:iOut .9s cubic-bezier(.7,0,.3,1) forwards; }
+  @keyframes iOut { 0%{transform:translateY(0) scale(1);opacity:1} 100%{transform:translateY(-100%) scale(.95);opacity:0;pointer-events:none} }
 
-  .main-column {
-    border-right: 1px solid var(--rule);
-    padding: 2rem;
-  }
+  /* ── APP ── */
+  #app { position:relative;z-index:10;min-height:100vh;opacity:0;pointer-events:none;transition:opacity .8s ease; }
+  #app.visible{opacity:1;pointer-events:all}
 
-  .sidebar {
-    padding: 1.5rem 1.25rem;
-    background: var(--paper);
-  }
+  /* NAV */
+  .nav { position:fixed;top:0;left:0;right:0;z-index:200;display:flex;align-items:center;justify-content:space-between;padding:20px 40px;background:linear-gradient(to bottom,rgba(8,8,16,.95),transparent);backdrop-filter:blur(4px); }
+  .nav-logo { font-family:'Syne',sans-serif;font-size:20px;font-weight:800;letter-spacing:.05em; }
+  .nav-logo span{color:var(--gold)}
+  #backBtn { display:flex;align-items:center;gap:8px;font-size:11px;letter-spacing:.2em;font-weight:500;color:var(--muted);background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:999px;padding:8px 20px;cursor:none;transition:color .2s,border-color .2s,background .2s;font-family:'DM Sans',sans-serif; }
+  #backBtn:hover{color:var(--gold);border-color:var(--gold2);background:rgba(240,192,96,.06)}
+  #backBtn.hidden{opacity:0;pointer-events:none}
+  #backBtn svg{transition:transform .2s}
+  #backBtn:hover svg{transform:translateX(-3px)}
 
-  /* ─── DAY HEADER ───────────────────────────────────────────── */
-  .day-header {
-    margin-bottom: 1.5rem;
-    padding-bottom: 1rem;
-    border-bottom: 2px solid var(--ink);
-  }
-  .day-label {
-    font-family: var(--mono);
-    font-size: 10px;
-    letter-spacing: 0.15em;
-    text-transform: uppercase;
-    color: var(--ink-muted);
-    margin-bottom: 0.2rem;
-  }
-  .day-date {
-    font-family: var(--serif);
-    font-size: clamp(2.2rem, 5vw, 3.8rem);
-    font-weight: 900;
-    line-height: 1;
-    color: var(--ink);
-  }
-  .day-full-date {
-    font-family: var(--body);
-    font-size: 13px;
-    color: var(--ink-muted);
-    font-style: italic;
-    margin-top: 0.2rem;
-  }
-  .day-tag {
-    display: inline-block;
-    font-family: var(--mono);
-    font-size: 9px;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    padding: 3px 8px;
-    border: 1px solid var(--accent);
-    color: var(--accent);
-    margin-top: 0.5rem;
-  }
-  .day-tag.rest-tag {
-    border-color: var(--gold);
-    color: var(--gold);
-  }
+  /* DECOR */
+  .bg-decor{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden}
+  .dc{position:absolute;border-radius:50%;border:1px solid rgba(240,192,96,.05)}
+  .dc1{width:700px;height:700px;top:50%;left:50%;transform:translate(-50%,-50%)}
+  .dc2{width:500px;height:500px;top:50%;left:50%;transform:translate(-50%,-50%)}
+  .dc3{width:300px;height:300px;top:50%;left:50%;transform:translate(-50%,-50%)}
+  .dl{position:absolute;background:rgba(240,192,96,.04)}
+  .dl-h{height:1px;width:100%;top:50%}
+  .dl-v{width:1px;height:100%;left:50%}
 
-  /* ─── CONTENT SECTIONS ─────────────────────────────────────── */
-  .section-rule {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    margin: 1.5rem 0 0.75rem;
-  }
-  .section-rule span {
-    font-family: var(--mono);
-    font-size: 9px;
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
-    color: var(--ink-muted);
-    white-space: nowrap;
-  }
-  .section-rule::before, .section-rule::after {
-    content: '';
-    height: 1px;
-    background: var(--rule);
-    flex: 1;
-  }
-  .section-rule::before { max-width: 20px; }
+  /* MAIN WRAP */
+  .main-wrap { min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:100px 24px 60px;position:relative; }
 
-  /* ─── GYM SECTION ──────────────────────────────────────────── */
-  .gym-card {
-    background: var(--paper-dark);
-    border: 1px solid var(--rule);
-    border-left: 3px solid var(--accent);
-    padding: 1rem 1.25rem;
-    margin-bottom: 1rem;
-  }
-  .gym-headline {
-    font-family: var(--serif);
-    font-size: 1.3rem;
-    font-weight: 700;
-    line-height: 1.2;
-    margin-bottom: 0.3rem;
-  }
-  .gym-subline {
-    font-family: var(--mono);
-    font-size: 10px;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: var(--ink-muted);
-    margin-bottom: 0.75rem;
-  }
-  .exercise-list {
-    list-style: none;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 4px 1.5rem;
-  }
-  .exercise-list li {
-    font-size: 13px;
-    color: var(--ink-muted);
-    display: flex;
-    align-items: baseline;
-    gap: 6px;
-  }
-  .exercise-list li::before {
-    content: '—';
-    color: var(--rule-heavy);
-    font-size: 10px;
-    flex-shrink: 0;
-  }
-  .exercise-name { color: var(--ink); font-weight: 400; }
-  .exercise-sets {
-    font-family: var(--mono);
-    font-size: 10px;
-    color: var(--ink-faint);
-    flex-shrink: 0;
-    margin-left: auto;
-  }
-  .rest-card {
-    background: var(--paper-dark);
-    border: 1px solid var(--rule);
-    border-left: 3px solid var(--gold);
-    padding: 1rem 1.25rem;
-    font-family: var(--serif);
-    font-style: italic;
-    font-size: 1.1rem;
-    color: var(--ink-muted);
-  }
+  /* ── CITY SCREEN ── */
+  .city-wrap { width:100%;max-width:860px;display:flex;flex-direction:column;align-items:center;gap:40px;position:relative;z-index:10; }
+  .screen-tag { font-size:10px;letter-spacing:.35em;color:var(--gold);opacity:0;animation:fUp .5s ease .1s forwards; }
+  .screen-title { font-family:'Syne',sans-serif;font-size:clamp(28px,5vw,50px);font-weight:800;letter-spacing:-.03em;text-align:center;opacity:0;animation:fUp .5s ease .2s forwards;line-height:1.1; }
+  .screen-sub { font-size:14px;color:var(--muted);opacity:0;animation:fUp .5s ease .3s forwards;text-align:center;line-height:1.6;max-width:440px; }
+  @keyframes fUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
 
-  /* ─── NOTES SECTION ────────────────────────────────────────── */
-  .notes-area {
-    position: relative;
-    margin-top: 0.5rem;
-  }
-  .notes-textarea {
-    width: 100%;
-    min-height: 200px;
-    background: var(--paper-dark);
-    border: 1px solid var(--rule);
-    border-top: none;
-    padding: 1rem;
-    font-family: var(--body);
-    font-size: 14px;
-    line-height: 1.8;
-    color: var(--ink);
-    resize: vertical;
-    outline: none;
-    transition: border-color 0.2s;
-    background-image: repeating-linear-gradient(
-      transparent,
-      transparent 28px,
-      var(--rule) 28px,
-      var(--rule) 29px
-    );
-    background-position: 0 1.8rem;
-  }
-  .notes-textarea:focus { border-color: var(--rule-heavy); }
-  .notes-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background: var(--ink);
-    color: var(--paper);
-    padding: 0.4rem 1rem;
-    font-family: var(--mono);
-    font-size: 10px;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-  }
-  .save-btn {
-    background: none;
-    border: 1px solid rgba(245,242,236,0.4);
-    color: var(--paper);
-    font-family: var(--mono);
-    font-size: 9px;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    padding: 3px 10px;
-    cursor: pointer;
-    transition: background 0.15s;
-  }
-  .save-btn:hover { background: rgba(245,242,236,0.15); }
-  .save-status {
-    font-family: var(--mono);
-    font-size: 9px;
-    color: var(--ink-faint);
-    margin-top: 0.3rem;
-    text-align: right;
-    letter-spacing: 0.05em;
-    min-height: 1.2em;
-  }
+  .city-grid { display:flex;flex-wrap:wrap;gap:12px;justify-content:center;width:100%; }
+  .city-card { position:relative;flex:1;min-width:130px;max-width:160px;background:var(--card);border:1px solid var(--border);border-radius:16px;padding:22px 16px 18px;display:flex;flex-direction:column;align-items:center;gap:10px;cursor:none;transition:border-color .25s,background .25s,transform .2s;opacity:0;animation:cRev .5s cubic-bezier(.16,1,.3,1) forwards; }
+  .city-card:nth-child(1){animation-delay:.08s}
+  .city-card:nth-child(2){animation-delay:.14s}
+  .city-card:nth-child(3){animation-delay:.20s}
+  .city-card:nth-child(4){animation-delay:.26s}
+  .city-card:nth-child(5){animation-delay:.32s}
+  .city-card:nth-child(6){animation-delay:.38s}
+  .city-card:nth-child(7){animation-delay:.44s}
+  .city-card:nth-child(8){animation-delay:.50s}
+  .city-card:nth-child(9){animation-delay:.56s}
+  .city-card:nth-child(10){animation-delay:.62s}
+  .city-card.available:hover { border-color:var(--border-h);background:rgba(240,192,96,.04);transform:translateY(-4px); }
+  .city-card.unavail { opacity:.35!important;cursor:not-allowed!important; }
+  .city-icon { font-size:26px; }
+  .city-name { font-family:'Syne',sans-serif;font-size:13px;font-weight:700;letter-spacing:.02em;text-align:center; }
+  .city-badge { font-size:9px;letter-spacing:.15em;padding:3px 9px;border-radius:999px;font-weight:500; }
+  .badge-open { background:rgba(62,207,142,.1);color:var(--green);border:1px solid rgba(62,207,142,.2); }
+  .badge-soon { background:rgba(255,255,255,.04);color:var(--muted);border:1px solid var(--border); }
+  @keyframes cRev { from{opacity:0;transform:translateY(20px) scale(.97)} to{opacity:1;transform:translateY(0) scale(1)} }
 
-  /* ─── SIDEBAR ──────────────────────────────────────────────── */
-  .sidebar-section {
-    margin-bottom: 1.5rem;
-    padding-bottom: 1.5rem;
-    border-bottom: 1px solid var(--rule);
+  /* ── REGISTRATION SCREEN ── */
+  .reg-wrap { width:100%;max-width:520px;display:flex;flex-direction:column;align-items:center;gap:32px;position:relative;z-index:10; }
+  .reg-card { width:100%;background:var(--card);border:1px solid var(--border);border-radius:20px;padding:36px 32px;display:flex;flex-direction:column;gap:24px;opacity:0;animation:fUp .5s ease .2s forwards; }
+  .form-row { display:flex;gap:16px;flex-wrap:wrap; }
+  .form-field { display:flex;flex-direction:column;gap:8px;flex:1;min-width:160px; }
+  .form-label { font-size:11px;letter-spacing:.2em;color:var(--muted);font-weight:500; }
+  .form-input {
+    background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:10px;
+    padding:12px 16px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;
+    outline:none;transition:border-color .2s,background .2s;cursor:none;
+    -webkit-appearance:none;
   }
-  .sidebar-section:last-child { border-bottom: none; }
-  .sidebar-heading {
-    font-family: var(--mono);
-    font-size: 9px;
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
-    color: var(--ink-muted);
-    margin-bottom: 0.75rem;
-    padding-bottom: 0.35rem;
-    border-bottom: 1px solid var(--rule);
-  }
+  .form-input::placeholder{color:var(--muted)}
+  .form-input:focus{border-color:rgba(240,192,96,.4);background:rgba(240,192,96,.03)}
+  .form-input.error{border-color:var(--red)!important}
+  .field-note { font-size:11px;color:var(--muted);margin-top:2px; }
+  .field-err { font-size:11px;color:var(--red);margin-top:2px;display:none; }
+  .field-err.show{display:block}
+  .phone-row { display:flex;gap:0; }
+  .phone-prefix { background:rgba(255,255,255,.04);border:1px solid var(--border);border-right:none;border-radius:10px 0 0 10px;padding:12px 14px;color:var(--muted);font-size:14px;font-family:'DM Sans',sans-serif;white-space:nowrap; }
+  .phone-input { border-radius:0 10px 10px 0!important; }
+  .party-wrap { position:relative; }
+  .party-input { width:100%; padding-right:80px!important; }
+  .char-count { position:absolute;right:14px;top:50%;transform:translateY(-50%);font-size:11px;color:var(--muted); }
+  .submit-btn { width:100%;padding:15px 24px;border-radius:12px;background:var(--gold);color:#080800;border:none;font-family:'Syne',sans-serif;font-size:13px;font-weight:800;letter-spacing:.08em;cursor:none;transition:opacity .15s,transform .15s; }
+  .submit-btn:hover{opacity:.88;transform:scale(.99)}
+  .city-pill { display:inline-flex;align-items:center;gap:6px;font-size:11px;letter-spacing:.15em;color:var(--gold);background:rgba(240,192,96,.08);border:1px solid rgba(240,192,96,.15);border-radius:999px;padding:5px 14px;margin-bottom:4px;opacity:0;animation:fUp .4s ease .1s forwards; }
 
-  /* Mini calendar */
-  .mini-cal {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 12px;
-  }
-  .mini-cal th {
-    font-family: var(--mono);
-    font-size: 9px;
-    letter-spacing: 0.1em;
-    text-align: center;
-    color: var(--ink-muted);
-    padding: 4px 2px;
-    font-weight: 400;
-  }
-  .mini-cal td {
-    text-align: center;
-    padding: 4px 2px;
-    cursor: pointer;
-    font-family: var(--body);
-    border-radius: 2px;
-    transition: background 0.1s;
-  }
-  .mini-cal td:hover { background: var(--paper-mid); }
-  .mini-cal td.today-cell {
-    background: var(--ink);
-    color: var(--paper);
-    border-radius: 2px;
-  }
-  .mini-cal td.selected-cell {
-    outline: 1.5px solid var(--accent);
-    color: var(--accent);
-  }
-  .mini-cal td.other-month { color: var(--ink-faint); }
-  .mini-cal td.rest-day { color: var(--gold); }
-  .cal-nav {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 0.5rem;
-  }
-  .cal-nav button {
-    background: none;
-    border: none;
-    cursor: pointer;
-    color: var(--ink-muted);
-    font-size: 14px;
-    padding: 2px 6px;
-    transition: color 0.15s;
-  }
-  .cal-nav button:hover { color: var(--ink); }
-  .cal-month-label {
-    font-family: var(--serif);
-    font-size: 13px;
-    font-weight: 700;
-    color: var(--ink);
-  }
+  /* ── PROGRESS BAR ── */
+  .progress-track { width:100%;display:flex;gap:6px;align-items:center;opacity:0;animation:fUp .4s ease .1s forwards; }
+  .prog-seg { flex:1;height:2px;border-radius:1px;background:rgba(255,255,255,.08);transition:background .5s ease;position:relative;overflow:hidden; }
+  .prog-seg.done{background:var(--gold2)}
+  .prog-seg.active::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,var(--gold2),var(--gold));animation:pFill .6s cubic-bezier(.4,0,.2,1) forwards}
+  @keyframes pFill{from{transform:scaleX(0);transform-origin:left}to{transform:scaleX(1);transform-origin:left}}
 
-  /* Week plan */
-  .week-plan-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 5px 0;
-    border-bottom: 1px solid var(--paper-mid);
-    font-size: 12px;
-  }
-  .week-plan-row:last-child { border-bottom: none; }
-  .week-plan-day {
-    font-family: var(--mono);
-    font-size: 9px;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--ink-muted);
-    width: 28px;
-  }
-  .week-plan-muscle {
-    color: var(--ink);
-    flex: 1;
-    margin: 0 0.5rem;
-    font-size: 12px;
-  }
-  .week-plan-dot {
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: var(--rule-heavy);
-    flex-shrink: 0;
-  }
-  .week-plan-dot.active { background: var(--accent); }
-  .week-plan-dot.rest { background: var(--gold); }
+  /* ── STEP / OPTION CARDS ── */
+  .step-wrap { width:100%;max-width:900px;position:relative;z-index:10;display:flex;flex-direction:column;align-items:center;gap:36px; }
+  .step-counter{font-size:11px;letter-spacing:.3em;color:var(--gold);opacity:0;animation:fUp .5s ease .1s forwards}
+  .step-question{font-family:'Syne',sans-serif;font-size:clamp(28px,5vw,48px);font-weight:700;line-height:1.1;letter-spacing:-.02em;text-align:center;opacity:0;animation:fUp .5s ease .2s forwards}
+  .step-hint{font-size:13px;color:var(--muted);margin-top:6px;opacity:0;animation:fUp .5s ease .3s forwards;letter-spacing:.05em;text-align:center}
+  .opts { display:flex;gap:12px;width:100%;flex-wrap:wrap;justify-content:center; }
+  .opt { flex:1;min-width:130px;max-width:165px;background:var(--card);border:1px solid var(--border);border-radius:16px;padding:24px 16px 20px;display:flex;flex-direction:column;align-items:center;gap:12px;cursor:none;transition:border-color .25s,background .25s,transform .2s;opacity:0;animation:cRev .5s cubic-bezier(.16,1,.3,1) forwards;position:relative;overflow:hidden; }
+  .opt::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(240,192,96,.06),transparent);opacity:0;transition:opacity .3s}
+  .opt:hover::before{opacity:1}
+  .opt:hover{border-color:var(--border-h);background:rgba(240,192,96,.04);transform:translateY(-4px)}
+  .opt:nth-child(1){animation-delay:.1s}.opt:nth-child(2){animation-delay:.17s}.opt:nth-child(3){animation-delay:.24s}.opt:nth-child(4){animation-delay:.31s}.opt:nth-child(5){animation-delay:.38s}
+  .opt-icon{width:52px;height:52px;border-radius:14px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.06);display:flex;align-items:center;justify-content:center;font-size:24px;transition:background .2s,transform .2s}
+  .opt:hover .opt-icon{background:rgba(240,192,96,.1);transform:scale(1.08)}
+  .opt-label{font-family:'Syne',sans-serif;font-size:13px;font-weight:600;letter-spacing:.03em;text-align:center;color:var(--text);line-height:1.3}
+  .opt-sub{font-size:11px;color:var(--muted);text-align:center;line-height:1.4}
+  .opt-ring{position:absolute;top:10px;right:10px;width:18px;height:18px;border-radius:50%;border:1.5px solid rgba(255,255,255,.12);transition:border-color .2s}
+  .opt:hover .opt-ring{border-color:var(--gold)}
 
-  /* Quote / date facts */
-  .sidebar-quote {
-    font-family: var(--serif);
-    font-style: italic;
-    font-size: 13px;
-    line-height: 1.6;
-    color: var(--ink-muted);
-    border-left: 2px solid var(--accent);
-    padding-left: 0.75rem;
-    margin: 0;
-  }
+  /* ── FINAL ── */
+  .final-wrap{display:flex;flex-direction:column;align-items:center;gap:48px;width:100%;max-width:900px;position:relative;z-index:10}
+  .final-cards{display:flex;gap:20px;width:100%;justify-content:center;flex-wrap:wrap}
+  .final-card{flex:1;min-width:240px;max-width:360px;border-radius:20px;padding:36px 32px;display:flex;flex-direction:column;gap:20px;cursor:none;position:relative;overflow:hidden;opacity:0;animation:cRev .5s cubic-bezier(.16,1,.3,1) forwards;transition:transform .25s}
+  .final-card:hover{transform:translateY(-6px)}
+  .final-card.recommend{background:var(--card);border:1px solid var(--border);animation-delay:.2s}
+  .final-card.recommend:hover{border-color:rgba(124,106,245,.4)}
+  .final-card.preorder{background:linear-gradient(135deg,#1a1608,#1e1a06);border:1px solid rgba(240,192,96,.2);animation-delay:.32s}
+  .final-card.preorder::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(240,192,96,.08),transparent 60%);pointer-events:none}
+  .final-card.preorder:hover{border-color:rgba(240,192,96,.6)}
+  .fc-badge{display:inline-block;font-size:9px;letter-spacing:.25em;padding:5px 12px;border-radius:999px;font-weight:500}
+  .recommend .fc-badge{background:rgba(124,106,245,.12);color:#a89cf5;border:1px solid rgba(124,106,245,.2)}
+  .preorder .fc-badge{background:rgba(240,192,96,.12);color:var(--gold);border:1px solid rgba(240,192,96,.2)}
+  .fc-icon{width:64px;height:64px;border-radius:18px;display:flex;align-items:center;justify-content:center;font-size:30px}
+  .recommend .fc-icon{background:rgba(124,106,245,.1)}
+  .preorder .fc-icon{background:rgba(240,192,96,.1)}
+  .fc-title{font-family:'Syne',sans-serif;font-size:24px;font-weight:700;letter-spacing:-.02em}
+  .fc-desc{font-size:13px;color:var(--muted);line-height:1.6;margin-top:8px}
+  .fc-btn{display:flex;align-items:center;justify-content:center;gap:8px;padding:14px 24px;border-radius:12px;font-family:'Syne',sans-serif;font-size:13px;font-weight:700;letter-spacing:.05em;cursor:none;border:none;transition:transform .15s,opacity .15s}
+  .fc-btn:hover{opacity:.88;transform:scale(.98)}
+  .recommend .fc-btn{background:rgba(255,255,255,.06);color:var(--text);border:1px solid var(--border)}
+  .recommend .fc-btn:hover{background:rgba(124,106,245,.15)}
+  .preorder .fc-btn{background:var(--gold);color:#0a0a00}
 
-  /* Motivational streak */
-  .streak-display {
-    text-align: center;
-    padding: 0.75rem;
-    background: var(--paper-dark);
-    border: 1px solid var(--rule);
-  }
-  .streak-number {
-    font-family: var(--serif);
-    font-size: 2.5rem;
-    font-weight: 900;
-    color: var(--accent);
-    line-height: 1;
-  }
-  .streak-label {
-    font-family: var(--mono);
-    font-size: 9px;
-    letter-spacing: 0.15em;
-    text-transform: uppercase;
-    color: var(--ink-muted);
-    margin-top: 0.2rem;
-  }
-  .streak-dots {
-    display: flex;
-    gap: 4px;
-    justify-content: center;
-    margin-top: 0.5rem;
-  }
-  .streak-dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background: var(--rule);
-  }
-  .streak-dot.filled { background: var(--accent); }
+  /* ── THANK YOU ── */
+  .ty-wrap{display:flex;flex-direction:column;align-items:center;gap:24px;text-align:center;max-width:500px;opacity:0;animation:fUp .7s cubic-bezier(.16,1,.3,1) .1s forwards;position:relative;z-index:10}
+  .ty-check{width:80px;height:80px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:36px;animation:cPop .6s cubic-bezier(.34,1.56,.64,1) .3s both}
+  @keyframes cPop{from{transform:scale(0);opacity:0}to{transform:scale(1);opacity:1}}
+  .ty-title{font-family:'Syne',sans-serif;font-size:clamp(40px,7vw,72px);font-weight:800;letter-spacing:-.03em;line-height:1}
+  .ty-body{font-size:15px;color:var(--muted);line-height:1.7;max-width:380px}
+  .ty-tag{font-size:10px;letter-spacing:.3em;color:var(--muted);padding:8px 20px;border-radius:999px;border:1px solid var(--border);margin-top:8px}
 
-  /* Footer */
-  footer {
-    border-top: 3px double var(--ink);
-    padding: 0.75rem 2rem;
-    display: flex;
-    justify-content: space-between;
-    font-family: var(--mono);
-    font-size: 10px;
-    color: var(--ink-faint);
-    letter-spacing: 0.08em;
-  }
+  /* ── PRICE ── */
+  .price-wrap{display:flex;flex-direction:column;align-items:center;gap:32px;width:100%;max-width:860px;position:relative;z-index:10}
+  .price-row{display:flex;gap:16px;width:100%;justify-content:center;flex-wrap:wrap}
+  .price-card{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:32px 28px;display:flex;flex-direction:column;gap:20px;flex:1;min-width:220px;max-width:260px;position:relative;overflow:hidden;opacity:0;animation:cRev .5s cubic-bezier(.16,1,.3,1) forwards}
+  .price-card:nth-child(1){animation-delay:.15s}
+  .price-card:nth-child(2){animation-delay:.25s;border-color:rgba(240,192,96,.3);background:linear-gradient(160deg,#151208,#0f0d05)}
+  .price-card:nth-child(3){animation-delay:.35s}
+  .price-card.feat::before{content:'EMPFOHLEN';position:absolute;top:16px;right:-28px;background:var(--gold);color:#0a0800;font-size:8px;font-weight:700;letter-spacing:.2em;padding:5px 36px;transform:rotate(45deg)}
+  .pc-tier{font-size:10px;letter-spacing:.25em;color:var(--muted);font-weight:500}
+  .pc-name{font-family:'Syne',sans-serif;font-size:20px;font-weight:700;letter-spacing:-.01em}
+  .pc-price{display:flex;align-items:baseline;gap:4px}
+  .pc-eur{font-size:22px;font-weight:500;color:var(--muted)}
+  .pc-amt{font-family:'Syne',sans-serif;font-size:56px;font-weight:800;letter-spacing:-.04em;line-height:1;color:var(--text)}
+  .price-card.feat .pc-amt{color:var(--gold)}
+  .pc-per{font-size:12px;color:var(--muted)}
+  .pc-div{height:1px;background:var(--border)}
+  .pc-feats{display:flex;flex-direction:column;gap:10px}
+  .pc-f{display:flex;align-items:center;gap:10px;font-size:13px;color:rgba(240,237,232,.75)}
+  .dot{width:6px;height:6px;border-radius:50%;background:var(--muted);flex-shrink:0}
+  .price-card.feat .dot{background:var(--gold)}
+  .pc-btn{padding:13px 20px;border-radius:12px;border:none;font-family:'Syne',sans-serif;font-size:13px;font-weight:700;letter-spacing:.05em;cursor:none;transition:opacity .15s,transform .15s}
+  .pc-btn:hover{opacity:.85;transform:scale(.98)}
+  .price-card.feat .pc-btn{background:var(--gold);color:#0a0800}
+  .price-card:not(.feat) .pc-btn{background:rgba(255,255,255,.05);color:var(--text);border:1px solid var(--border)}
+  .price-note{font-size:12px;color:var(--muted);text-align:center;letter-spacing:.05em;opacity:0;animation:fUp .4s ease .5s forwards}
 
-  /* Responsive */
-  @media (max-width: 768px) {
-    .page-layout { grid-template-columns: 1fr; }
-    .sidebar { border-top: 1px solid var(--rule); }
-    .exercise-list { grid-template-columns: 1fr; }
-    .masthead { padding: 0.75rem 1rem 0.5rem; }
-    .main-column { padding: 1.25rem; }
-  }
+  /* EXIT ANIM */
+  .sExit{animation:sOut .32s ease forwards}
+  @keyframes sOut{to{opacity:0;transform:translateX(-28px)}}
+
+  /* ── VOTE BAR ── */
+  .vote-bar-wrap{width:100%;margin-top:2px}
+  .vote-bar-track{width:100%;height:3px;background:rgba(255,255,255,.08);border-radius:2px;overflow:hidden}
+  .vote-bar-fill{height:100%;border-radius:2px;background:linear-gradient(90deg,var(--gold2),var(--gold));width:0;transition:width 1s cubic-bezier(.4,0,.2,1)}
+  .vote-pct{font-size:10px;color:var(--gold);letter-spacing:.08em;margin-top:3px;text-align:center}
+
+  /* ── PEOPLE COUNTER ── */
+  #people-canvas{position:fixed;inset:0;z-index:50;pointer-events:none;display:none}
+  #people-canvas.active{pointer-events:all;display:block}
+  .people-section{width:100%;max-width:860px;position:relative;z-index:10;display:flex;flex-direction:column;align-items:center;gap:16px;opacity:0;animation:fUp .5s ease .1s forwards}
+  .people-label{font-size:11px;letter-spacing:.25em;color:var(--muted)}
+  .people-count-big{font-family:'Syne',sans-serif;font-size:clamp(36px,6vw,64px);font-weight:800;color:var(--gold);letter-spacing:-.03em}
+  .people-hint{font-size:12px;color:var(--muted);letter-spacing:.1em}
+  .people-tap-btn{margin-top:8px;padding:10px 24px;border-radius:999px;background:rgba(240,192,96,.08);border:1px solid rgba(240,192,96,.2);color:var(--gold);font-size:12px;letter-spacing:.15em;cursor:none;transition:background .2s}
+  .people-tap-btn:hover{background:rgba(240,192,96,.15)}
+
+  /* ── SUMMARY CARD ── */
+  .summary-card{width:100%;max-width:500px;background:var(--card);border:1px solid rgba(240,192,96,.15);border-radius:16px;padding:24px 28px;display:flex;flex-direction:column;gap:12px;opacity:0;animation:fUp .5s ease .1s forwards}
+  .summary-title{font-size:10px;letter-spacing:.25em;color:var(--gold);margin-bottom:4px}
+  .summary-rows{display:flex;flex-direction:column;gap:8px}
+  .summary-row{display:flex;justify-content:space-between;align-items:center;font-size:13px}
+  .summary-key{color:var(--muted)}
+  .summary-val{color:var(--text);font-weight:500;font-family:'Syne',sans-serif;font-size:12px}
 </style>
 </head>
 <body>
 
-<!-- MASTHEAD -->
-<header class="masthead">
-  <div class="masthead-meta">
-    <span id="meta-edition">Vol. I — Personal Edition</span>
-    <span id="meta-date-short">Loading…</span>
-    <span id="meta-price">Est. — Today</span>
+<div id="cur"></div>
+<div id="cur-r"></div>
+
+<!-- INTRO -->
+<div id="intro">
+  <div class="i-grid"></div>
+  <div class="i-orb io1"></div>
+  <div class="i-orb io2"></div>
+  <div class="i-content">
+    <div class="i-eye">DIE NACHT GEHÖRT DIR</div>
+    <div class="i-title">
+      <span class="w">NIGHT</span>
+      <span class="w">PULSE</span>
+    </div>
+    <div class="i-sub">Wähle. Stimme ab. Erlebe dein Event.</div>
+    <div class="i-bar-w"><div class="i-bar-f"></div></div>
+    <div class="i-load">WIRD GELADEN</div>
   </div>
-  <h1 class="masthead-title">The Daily Ledger</h1>
-  <p class="masthead-subtitle">Your Personal Chronicle of Days &amp; Discipline</p>
-</header>
-
-<!-- NAV BAR -->
-<nav class="nav-bar" id="nav-bar">
-  <div class="nav-arrows">
-    <button class="arrow-btn" id="prev-week" title="Previous week">&#8592;</button>
-    <button class="arrow-btn" id="next-week" title="Next week">&#8594;</button>
-  </div>
-</nav>
-
-<!-- MAIN LAYOUT -->
-<div class="page-layout">
-  <main class="main-column" id="main-column">
-    <!-- Injected by JS -->
-  </main>
-
-  <aside class="sidebar" id="sidebar">
-    <!-- Injected by JS -->
-  </aside>
 </div>
 
-<footer>
-  <span>The Daily Ledger — Personal Calendar System</span>
-  <span>All data stored locally. No cloud. No tracking.</span>
-  <span id="footer-date"></span>
-</footer>
+<!-- APP -->
+<div id="app">
+  <div class="bg-decor">
+    <div class="dc dc1"></div><div class="dc dc2"></div><div class="dc dc3"></div>
+    <div class="dl dl-h"></div><div class="dl dl-v"></div>
+  </div>
+  <nav class="nav">
+    <div class="nav-logo">NIGHT<span>PULSE</span></div>
+    <button id="backBtn" class="hidden" onclick="goBack()">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M9 11L5 7L9 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      ZURÜCK
+    </button>
+  </nav>
+  <div class="main-wrap" id="mWrap"></div>
+</div>
 
 <script>
-// ── DATA & CONSTANTS ─────────────────────────────────────────────────────────
+// ── Cursor ──
+const cur = document.getElementById('cur'), curR = document.getElementById('cur-r');
+let mx=-100,my=-100,rx=-100,ry=-100;
+document.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY});
+(function a(){cur.style.left=mx+'px';cur.style.top=my+'px';rx+=(mx-rx)*.12;ry+=(my-ry)*.12;curR.style.left=rx+'px';curR.style.top=ry+'px';requestAnimationFrame(a)})();
 
-const DAYS = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
-const DAYS_SHORT = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-const MONTHS_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+// ── Schimpfwort-Filter (DE/EN) ──
+const BADWORDS = ['fick','scheiß','scheiss','arsch','wichser','hurensohn','nutte','fotze','kacke','schlampe','bastard','idiot','depp','vollidiot','nazi','shit','fuck','bitch','ass','cunt','damn','piss','cock','dick','pussy','faggot','nigger','whore'];
+function containsBad(s){ const l=s.toLowerCase(); return BADWORDS.some(w=>l.includes(w)); }
 
-// Gym plan: 6-day split with rotation each week
-// Week A and Week B alternate for muscle group variety
-const GYM_PLANS = {
-  A: {
-    0: null, // Sunday = rest
-    1: {
-      name: 'Push — Chest & Shoulders',
-      focus: 'Horizontal + Vertical Press',
-      exercises: [
-        {name:'Barbell Bench Press', sets:'4×6–8'},
-        {name:'Incline Dumbbell Press', sets:'3×10–12'},
-        {name:'Overhead Barbell Press', sets:'4×6–8'},
-        {name:'Lateral Raises', sets:'3×15–20'},
-        {name:'Cable Fly', sets:'3×12–15'},
-        {name:'Tricep Pushdowns', sets:'3×12–15'},
-      ]
-    },
-    2: {
-      name: 'Pull — Back & Biceps',
-      focus: 'Vertical + Horizontal Pull',
-      exercises: [
-        {name:'Deadlift', sets:'4×4–6'},
-        {name:'Weighted Pull-Ups', sets:'4×6–8'},
-        {name:'Barbell Row', sets:'4×8–10'},
-        {name:'Face Pulls', sets:'3×15–20'},
-        {name:'Hammer Curl', sets:'3×12'},
-        {name:'Incline Dumbbell Curl', sets:'3×12'},
-      ]
-    },
-    3: {
-      name: 'Legs — Quad Focus',
-      focus: 'Knee-Dominant + Calves',
-      exercises: [
-        {name:'Barbell Back Squat', sets:'5×5'},
-        {name:'Leg Press', sets:'4×10–12'},
-        {name:'Bulgarian Split Squat', sets:'3×10 ea.'},
-        {name:'Leg Extension', sets:'3×15'},
-        {name:'Standing Calf Raise', sets:'5×15'},
-        {name:'Seated Calf Raise', sets:'3×20'},
-      ]
-    },
-    4: {
-      name: 'Push — Shoulders & Triceps',
-      focus: 'Overhead + Isolation',
-      exercises: [
-        {name:'Seated DB Press', sets:'4×8–10'},
-        {name:'Arnold Press', sets:'3×10–12'},
-        {name:'Front Raise', sets:'3×12'},
-        {name:'Lateral Raises', sets:'4×15–20'},
-        {name:'Skull Crushers', sets:'3×12'},
-        {name:'Overhead Tricep Ext.', sets:'3×12'},
-      ]
-    },
-    5: {
-      name: 'Pull — Lats & Rear Delts',
-      focus: 'Width + Posterior Chain',
-      exercises: [
-        {name:'Wide-Grip Pull-Down', sets:'4×10–12'},
-        {name:'Seated Cable Row', sets:'4×10–12'},
-        {name:'Single-Arm DB Row', sets:'3×10 ea.'},
-        {name:'Reverse Pec Deck', sets:'3×15–20'},
-        {name:'Barbell Curl', sets:'3×10'},
-        {name:'Preacher Curl', sets:'3×12'},
-      ]
-    },
-    6: {
-      name: 'Legs — Hamstring & Glute',
-      focus: 'Hip-Dominant + Core',
-      exercises: [
-        {name:'Romanian Deadlift', sets:'4×8–10'},
-        {name:'Hip Thrust', sets:'4×10–12'},
-        {name:'Leg Curl', sets:'4×12–15'},
-        {name:'Sumo Squat', sets:'3×12'},
-        {name:'Cable Kick-Back', sets:'3×15 ea.'},
-        {name:'Plank Hold', sets:'3×60s'},
-      ]
-    },
-  },
-  B: {
-    0: null, // Sunday = rest
-    1: {
-      name: 'Push — Chest & Triceps',
-      focus: 'Chest Dominant',
-      exercises: [
-        {name:'Incline Barbell Press', sets:'4×6–8'},
-        {name:'Flat Dumbbell Press', sets:'3×10–12'},
-        {name:'Cable Crossover', sets:'3×15'},
-        {name:'Dips (weighted)', sets:'3×8–10'},
-        {name:'Close-Grip Bench Press', sets:'3×10'},
-        {name:'Overhead Tricep Ext.', sets:'3×12'},
-      ]
-    },
-    2: {
-      name: 'Pull — Traps & Biceps',
-      focus: 'Back Thickness',
-      exercises: [
-        {name:'Barbell Row (pronated)', sets:'4×6–8'},
-        {name:'T-Bar Row', sets:'4×8–10'},
-        {name:'Shrugs', sets:'4×15'},
-        {name:'Straight-Arm Pushdown', sets:'3×12'},
-        {name:'EZ-Bar Curl', sets:'4×10'},
-        {name:'Concentration Curl', sets:'3×12 ea.'},
-      ]
-    },
-    3: {
-      name: 'Legs — Glute & Hamstring',
-      focus: 'Posterior Chain First',
-      exercises: [
-        {name:'Romanian Deadlift', sets:'4×8–10'},
-        {name:'Hip Thrust', sets:'5×10–12'},
-        {name:'Leg Curl', sets:'4×12'},
-        {name:'Walking Lunge', sets:'3×12 ea.'},
-        {name:'Donkey Calf Raise', sets:'5×15'},
-        {name:'Ab Wheel Rollout', sets:'3×10'},
-      ]
-    },
-    4: {
-      name: 'Push — Shoulders',
-      focus: 'Full Delt Development',
-      exercises: [
-        {name:'Military Press (standing)', sets:'5×5'},
-        {name:'Lateral Raises', sets:'5×20'},
-        {name:'Rear Delt Fly', sets:'4×15'},
-        {name:'Upright Row', sets:'3×12'},
-        {name:'Cable Lateral Raise', sets:'3×15 ea.'},
-        {name:'Tricep Dip Machine', sets:'3×12'},
-      ]
-    },
-    5: {
-      name: 'Pull — Lats & Biceps',
-      focus: 'Back Width',
-      exercises: [
-        {name:'Weighted Chin-Ups', sets:'4×6–8'},
-        {name:'Lat Pulldown (close grip)', sets:'4×10'},
-        {name:'Cable Face Pull', sets:'4×15'},
-        {name:'Pendlay Row', sets:'3×8'},
-        {name:'Spider Curl', sets:'3×12'},
-        {name:'Cable Curl', sets:'3×15'},
-      ]
-    },
-    6: {
-      name: 'Legs — Quad & Core',
-      focus: 'Squat + Stabilizers',
-      exercises: [
-        {name:'Front Squat', sets:'4×6–8'},
-        {name:'Hack Squat', sets:'4×10'},
-        {name:'Leg Extension', sets:'4×15'},
-        {name:'Sissy Squat', sets:'3×12'},
-        {name:'Standing Calf Raise', sets:'5×15'},
-        {name:'Dragon Flag', sets:'3×8'},
-      ]
-    },
-  }
-};
+// ── Städte Kärnten ──
+const CITIES = [
+  {name:'Villach',icon:'🏙️',avail:true},
+  {name:'Velden',icon:'🌊',avail:true},
+  {name:'Klagenfurt',icon:'🏛️',avail:false},
+  {name:'Spittal',icon:'🏔️',avail:false},
+  {name:'Wolfsberg',icon:'🌲',avail:false},
+  {name:'Feldkirchen',icon:'🌾',avail:false},
+  {name:'St. Veit',icon:'⛪',avail:false},
+  {name:'Hermagor',icon:'🏕️',avail:false},
+  {name:'Völkermarkt',icon:'🏘️',avail:false},
+  {name:'Friesach',icon:'🏰',avail:false},
+];
 
-// ── STATE ────────────────────────────────────────────────────────────────────
-const today = new Date();
-today.setHours(0,0,0,0);
+// ── Selection Steps ──
+const STEPS = [
+  { id:'location', question:'Wo soll das Event stattfinden?', hint:'Wähle die perfekte Location',
+    options:[{icon:'🏙️',label:'Rooftop',sub:'Über den Dächern'},{icon:'🌲',label:'Outdoor',sub:'Open Air & Natur'},{icon:'🏭',label:'Warehouse',sub:'Industrial Vibes'},{icon:'🏛️',label:'Venue',sub:'Exklusive Halle'},{icon:'🚢',label:'Boot',sub:'Auf dem Wasser'}]},
+  { id:'theme', question:'Welches Thema soll es haben?', hint:'Das Konzept des Abends',
+    options:[{icon:'🌌',label:'Futuristic',sub:'Sci-Fi & Neo-Neon'},{icon:'🌿',label:'Organic',sub:'Natur trifft Kunst'},{icon:'👑',label:'Luxury',sub:'Eleganz & Glamour'},{icon:'🎭',label:'Masquerade',sub:'Mystisch & geheimnisvoll'},{icon:'🏚️',label:'Underground',sub:'Raw & Authentisch'}]},
+  { id:'colors', question:'Welche Farbpalette?', hint:'Die visuelle Sprache des Abends',
+    options:[{icon:'🖤',label:'Monochrome',sub:'Schwarz, Weiß, Grau'},{icon:'🔥',label:'Warm Glow',sub:'Gold, Amber, Rot'},{icon:'🌊',label:'Cool Wave',sub:'Blau, Lila, Cyan'},{icon:'🌺',label:'Vivid',sub:'Bunt & lebendig'},{icon:'🌙',label:'Dark Neon',sub:'Dunkel + Neon'}]},
+  { id:'music', question:'Welche Musik?', hint:'Der Soundtrack eurer Nacht',
+    options:[{icon:'🎹',label:'Techno',sub:'Hard & Industrial'},{icon:'🎷',label:'House',sub:'Deep & Melodic'},{icon:'🎻',label:'Live Band',sub:'Akustisch & Live'},{icon:'🎤',label:'Hip-Hop',sub:'Beats & Rap'},{icon:'🎸',label:'Mixed',sub:'Alle Genres'}]},
+  { id:'extras', question:'Welche Specials willst du?', hint:'Das gewisse Etwas',
+    options:[{icon:'💡',label:'Light Show',sub:'Visuelle Effekte'},{icon:'🍹',label:'Open Bar',sub:'Getränke inkl.'},{icon:'🎨',label:'Live Art',sub:'Künstler vor Ort'},{icon:'📸',label:'Foto Zone',sub:'Professionelle Fotos'},{icon:'🎆',label:'Feuerwerk',sub:'Großes Finale'}]},
+];
 
-let selectedDate = new Date(today);
-let navWeekStart = getWeekStart(today);
-let miniCalDate = new Date(today.getFullYear(), today.getMonth(), 1);
+// ── State ──
+let phase = 'city'; // city | register | steps | final | thankyou | price
+let step = 0;
+let history = [];
+let selectedCity = '';
+let userData = {};
 
-function getWeekStart(d) {
-  const day = new Date(d);
-  const diff = day.getDay(); // 0 = Sun
-  day.setDate(day.getDate() - diff);
-  day.setHours(0,0,0,0);
-  return day;
+function $(id){ return document.getElementById(id); }
+function setBack(show){ $('backBtn').className = show ? '' : 'hidden'; }
+
+function goBack(){
+  if(!history.length) return;
+  const prev = history.pop();
+  phase = prev.phase; step = prev.step;
+  animT(() => {
+    if(phase==='city') renderCity();
+    else if(phase==='register') renderRegister();
+    else if(phase==='steps') renderStep();
+    else if(phase==='final') renderFinal();
+    else if(phase==='price') renderPrice();
+  });
 }
 
-function dateKey(d) {
-  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+function push(){ history.push({phase,step}); }
+
+function animT(fn){
+  const w=$('mWrap');
+  w.classList.add('sExit');
+  setTimeout(()=>{ w.classList.remove('sExit'); fn(); },320);
 }
 
-function getGymPlan(d) {
-  // Determine week number from an epoch reference to alternate A/B
-  const ref = new Date(2024, 0, 7); // A reference Sunday
-  ref.setHours(0,0,0,0);
-  const ms = d - ref;
-  const weeks = Math.floor(ms / (7 * 24 * 3600 * 1000));
-  const plan = weeks % 2 === 0 ? 'A' : 'B';
-  const dow = d.getDay();
-  return { plan, workout: GYM_PLANS[plan][dow], isRest: dow === 0 };
-}
-
-function saveNote(d, text) {
-  const key = 'dl_note_' + dateKey(d);
-  localStorage.setItem(key, text);
-}
-
-function loadNote(d) {
-  return localStorage.getItem('dl_note_' + dateKey(d)) || '';
-}
-
-function getStreak() {
-  let streak = 0;
-  const d = new Date(today);
-  for (let i = 0; i < 30; i++) {
-    const note = localStorage.getItem('dl_note_' + dateKey(d));
-    if (note && note.trim().length > 0) {
-      streak++;
-      d.setDate(d.getDate() - 1);
-    } else {
-      break;
-    }
-  }
-  return streak;
-}
-
-// ── RENDER FUNCTIONS ─────────────────────────────────────────────────────────
-
-function renderNav() {
-  const bar = document.getElementById('nav-bar');
-  // Remove all nav-btn elements
-  bar.querySelectorAll('.nav-btn').forEach(b => b.remove());
-
-  const arrows = bar.querySelector('.nav-arrows');
-
-  for (let i = 0; i < 7; i++) {
-    const d = new Date(navWeekStart);
-    d.setDate(d.getDate() + i);
-    const isToday = dateKey(d) === dateKey(today);
-    const isSelected = dateKey(d) === dateKey(selectedDate);
-
-    const btn = document.createElement('button');
-    btn.className = 'nav-btn' + (isSelected ? ' active' : '') + (isToday ? ' today-marker' : '');
-    btn.innerHTML = `${DAYS_SHORT[d.getDay()]}<br><span style="font-size:12px;font-weight:500">${d.getDate()}</span>`;
-    btn.style.lineHeight = '1.3';
-    btn.dataset.date = dateKey(d);
-    btn.addEventListener('click', () => {
-      selectedDate = new Date(d);
-      renderAll();
-    });
-    bar.insertBefore(btn, arrows);
-  }
-}
-
-function renderMain() {
-  const main = document.getElementById('main-column');
-  const d = selectedDate;
-  const gym = getGymPlan(d);
-  const savedNote = loadNote(d);
-  const isToday = dateKey(d) === dateKey(today);
-
-  const tagHTML = gym.isRest
-    ? `<span class="day-tag rest-tag">Rest Day</span>`
-    : `<span class="day-tag">Training Day — Week ${gym.plan}</span>`;
-
-  let gymHTML = '';
-  if (gym.isRest) {
-    gymHTML = `<div class="rest-card">
-      <strong style="font-style:normal;font-family:var(--serif)">Rest &amp; Recovery.</strong>
-      Today is a rest day. Allow your muscles to recover and grow. Consider light walking, stretching, or mobility work. Eat well. Sleep deeply.
+// ════════════════════════════════
+// SCREEN: CITY
+// ════════════════════════════════
+function renderCity(){
+  phase='city';
+  $('mWrap').innerHTML=`
+    <div class="city-wrap">
+      <div style="text-align:center">
+        <div class="screen-tag">SCHRITT 1 — STANDORT</div>
+        <div class="screen-title" style="margin-top:12px">Wo bist du in Kärnten?</div>
+        <div class="screen-sub" style="margin-top:10px">Wähle deinen Ort. Aktuell verfügbar: <strong style="color:var(--gold)">Villach & Velden</strong></div>
+      </div>
+      <div class="city-grid">
+        ${CITIES.map((c,i)=>`
+          <div class="city-card ${c.avail?'available':'unavail'}" ${c.avail?`onclick="selectCity('${c.name}')"`:'title="Noch nicht verfügbar"'}>
+            <div class="city-icon">${c.icon}</div>
+            <div class="city-name">${c.name}</div>
+            <div class="city-badge ${c.avail?'badge-open':'badge-soon'}">${c.avail?'VERFÜGBAR':'BALD'}</div>
+          </div>
+        `).join('')}
+      </div>
     </div>`;
-  } else if (gym.workout) {
-    const exItems = gym.workout.exercises.map(ex =>
-      `<li><span class="exercise-name">${ex.name}</span><span class="exercise-sets">${ex.sets}</span></li>`
-    ).join('');
-    gymHTML = `<div class="gym-card">
-      <div class="gym-headline">${gym.workout.name}</div>
-      <div class="gym-subline">${gym.workout.focus} &mdash; Plan ${gym.plan}</div>
-      <ul class="exercise-list">${exItems}</ul>
+  setBack(false);
+}
+
+function selectCity(name){
+  selectedCity=name;
+  push();
+  animT(renderRegister);
+}
+
+// ════════════════════════════════
+// SCREEN: REGISTER
+// ════════════════════════════════
+function renderRegister(){
+  phase='register';
+  $('mWrap').innerHTML=`
+    <div class="reg-wrap">
+      <div style="text-align:center;width:100%">
+        <div class="city-pill">📍 ${selectedCity}</div>
+        <div class="screen-title" style="margin-top:12px;opacity:0;animation:fUp .5s ease .15s forwards">Deine Angaben</div>
+        <div class="screen-sub" style="margin-top:8px;opacity:0;animation:fUp .5s ease .25s forwards">Damit wir dich benachrichtigen können, wenn es losgeht.</div>
+      </div>
+      <div class="reg-card">
+        <div class="form-row">
+          <div class="form-field">
+            <label class="form-label">VORNAME *</label>
+            <input class="form-input" id="inp-fname" type="text" placeholder="Max" maxlength="40">
+            <div class="field-err" id="err-fname">Bitte Vorname eingeben</div>
+          </div>
+          <div class="form-field">
+            <label class="form-label">NACHNAME <span style="color:var(--muted);font-size:10px">(optional)</span></label>
+            <input class="form-input" id="inp-lname" type="text" placeholder="Mustermann" maxlength="60">
+          </div>
+        </div>
+        <div class="form-field">
+          <label class="form-label">TELEFONNUMMER *</label>
+          <div class="phone-row">
+            <div class="phone-prefix">🇦🇹 +43</div>
+            <input class="form-input phone-input" id="inp-phone" type="tel" placeholder="660 1234567" maxlength="20" style="flex:1">
+          </div>
+          <div class="field-err" id="err-phone">Bitte gültige Telefonnummer eingeben</div>
+        </div>
+        <div class="form-field">
+          <label class="form-label">DEIN PARTY-NAME <span style="color:var(--muted);font-size:10px">(optional)</span></label>
+          <div class="party-wrap">
+            <input class="form-input party-input" id="inp-party" type="text" placeholder="z.B. NightKing, LoudQueen …" maxlength="25" oninput="updateCharCount()">
+            <span class="char-count" id="charCount">0/25</span>
+          </div>
+          <div class="field-note">Dein Name auf dem Ticket und in der Community</div>
+          <div class="field-err" id="err-party">Party-Name enthält unerlaubte Wörter</div>
+        </div>
+        <button class="submit-btn" onclick="submitReg()">WEITER ZUR AUSWAHL →</button>
+      </div>
     </div>`;
+  setBack(true);
+}
+
+function updateCharCount(){
+  const v=$('inp-party').value;
+  $('charCount').textContent=v.length+'/25';
+}
+
+function submitReg(){
+  let ok=true;
+  const fname=$('inp-fname').value.trim();
+  const lname=$('inp-lname').value.trim();
+  const phone=$('inp-phone').value.trim();
+  const party=$('inp-party').value.trim();
+
+  // Validate fname
+  if(!fname){
+    $('inp-fname').classList.add('error');
+    $('err-fname').classList.add('show'); ok=false;
+  } else {
+    $('inp-fname').classList.remove('error');
+    $('err-fname').classList.remove('show');
   }
 
-  const todayBadge = isToday ? `<span style="font-family:var(--mono);font-size:9px;letter-spacing:0.1em;background:var(--accent);color:var(--paper);padding:2px 8px;margin-left:8px;">TODAY</span>` : '';
-
-  main.innerHTML = `
-    <div class="day-header">
-      <div class="day-label">${DAYS[d.getDay()]}${todayBadge}</div>
-      <div class="day-date">${String(d.getDate()).padStart(2,'0')} ${MONTHS_SHORT[d.getMonth()]}</div>
-      <div class="day-full-date">${MONTHS[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}</div>
-      ${tagHTML}
-    </div>
-
-    <div class="section-rule"><span>Training Programme</span></div>
-    ${gymHTML}
-
-    <div class="section-rule"><span>Daily Chronicle &mdash; Notes &amp; Observations</span></div>
-    <div class="notes-area">
-      <div class="notes-header">
-        <span>Personal Log</span>
-        <button class="save-btn" id="save-btn">Save Entry</button>
-      </div>
-      <textarea class="notes-textarea" id="notes-textarea" placeholder="Record your thoughts, tasks, meals, or reflections for the day…">${savedNote}</textarea>
-      <div class="save-status" id="save-status">${savedNote ? 'Entry saved.' : 'Unsaved.'}</div>
-    </div>
-  `;
-
-  document.getElementById('save-btn').addEventListener('click', () => {
-    const text = document.getElementById('notes-textarea').value;
-    saveNote(d, text);
-    const el = document.getElementById('save-status');
-    el.textContent = 'Saved at ' + new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
-    el.style.color = 'var(--accent)';
-    setTimeout(() => { el.style.color = ''; }, 2000);
-    renderSidebar();
-  });
-
-  document.getElementById('notes-textarea').addEventListener('input', () => {
-    document.getElementById('save-status').textContent = 'Unsaved changes…';
-    document.getElementById('save-status').style.color = 'var(--gold)';
-  });
-
-  // Auto-save on date switch
-  document.getElementById('notes-textarea').addEventListener('blur', () => {
-    const text = document.getElementById('notes-textarea').value;
-    saveNote(d, text);
-    const el = document.getElementById('save-status');
-    if (el) { el.textContent = 'Auto-saved.'; el.style.color = ''; }
-  });
-}
-
-function renderSidebar() {
-  const sidebar = document.getElementById('sidebar');
-  const d = selectedDate;
-
-  // Mini calendar
-  const year = miniCalDate.getFullYear();
-  const month = miniCalDate.getMonth();
-  const firstDay = new Date(year, month, 1).getDay();
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
-  const daysInPrevMonth = new Date(year, month, 0).getDate();
-
-  let calRows = '';
-  let dayCount = 1;
-  let nextMonthDay = 1;
-  let prevDay = daysInPrevMonth - firstDay + 1;
-
-  for (let row = 0; row < 6; row++) {
-    let rowHTML = '<tr>';
-    for (let col = 0; col < 7; col++) {
-      const cellIndex = row * 7 + col;
-      let cellDate, isOtherMonth = false;
-      if (cellIndex < firstDay) {
-        cellDate = new Date(year, month - 1, prevDay++);
-        isOtherMonth = true;
-      } else if (dayCount > daysInMonth) {
-        cellDate = new Date(year, month + 1, nextMonthDay++);
-        isOtherMonth = true;
-      } else {
-        cellDate = new Date(year, month, dayCount++);
-      }
-      const isToday2 = dateKey(cellDate) === dateKey(today);
-      const isSelected2 = dateKey(cellDate) === dateKey(d);
-      const isRest = cellDate.getDay() === 0;
-      let cls = '';
-      if (isToday2) cls = 'today-cell';
-      else if (isSelected2) cls = 'selected-cell';
-      else if (isOtherMonth) cls = 'other-month';
-      else if (isRest) cls = 'rest-day';
-
-      rowHTML += `<td class="${cls}" data-date="${dateKey(cellDate)}">${cellDate.getDate()}</td>`;
-    }
-    rowHTML += '</tr>';
-    calRows += rowHTML;
-    if (dayCount > daysInMonth && nextMonthDay > 1) break;
+  // Validate phone — at least 7 digits
+  const digits=phone.replace(/\D/g,'');
+  if(digits.length<7){
+    $('inp-phone').classList.add('error');
+    $('err-phone').classList.add('show'); ok=false;
+  } else {
+    $('inp-phone').classList.remove('error');
+    $('err-phone').classList.remove('show');
   }
 
-  // Week plan overview
-  const weekPlanDays = [];
-  for (let i = 0; i < 7; i++) {
-    const wd = new Date(getWeekStart(d));
-    wd.setDate(wd.getDate() + i);
-    const gymDay = getGymPlan(wd);
-    const isCurrentDay = dateKey(wd) === dateKey(d);
-    const label = gymDay.isRest ? 'Rest' : (gymDay.workout ? gymDay.workout.name.split('—')[0].trim() : '—');
-    weekPlanDays.push({ dow: DAYS_SHORT[wd.getDay()], label, isRest: gymDay.isRest, active: isCurrentDay });
+  // Validate party name
+  if(party && containsBad(party)){
+    $('inp-party').classList.add('error');
+    $('err-party').classList.add('show'); ok=false;
+  } else {
+    $('inp-party').classList.remove('error');
+    $('err-party').classList.remove('show');
   }
 
-  const weekPlanHTML = weekPlanDays.map(wp => `
-    <div class="week-plan-row">
-      <span class="week-plan-day">${wp.dow}</span>
-      <span class="week-plan-muscle" style="${wp.active ? 'color:var(--accent);font-weight:600' : ''}">${wp.label}</span>
-      <span class="week-plan-dot ${wp.active ? 'active' : wp.isRest ? 'rest' : ''}"></span>
-    </div>
-  `).join('');
+  if(!ok) return;
+  userData = { fname, lname, phone:'+43'+digits, party: party || fname };
+  push();
+  animT(renderStep);
+}
 
-  // Streak
-  const streak = getStreak();
-  const streakDots = Array.from({length: 7}, (_, i) => {
-    const sd = new Date(today);
-    sd.setDate(sd.getDate() - (6 - i));
-    const note = localStorage.getItem('dl_note_' + dateKey(sd));
-    return `<span class="streak-dot ${note && note.trim() ? 'filled' : ''}"></span>`;
-  }).join('');
-
-  // Quotes rotation
-  const quotes = [
-    "The secret of getting ahead is getting started.",
-    "Discipline is the bridge between goals and accomplishment.",
-    "Do something today that your future self will thank you for.",
-    "Strength does not come from the body. It comes from the will of the soul.",
-    "Every champion was once a contender who refused to give up.",
-    "Train hard, eat right, live well.",
-    "The body achieves what the mind believes."
-  ];
-  const quoteIdx = (d.getDate() + d.getMonth()) % quotes.length;
-
-  sidebar.innerHTML = `
-    <div class="sidebar-section">
-      <div class="sidebar-heading">Calendar</div>
-      <div class="cal-nav">
-        <button id="cal-prev">&lsaquo;</button>
-        <span class="cal-month-label">${MONTHS_SHORT[month]} ${year}</span>
-        <button id="cal-next">&rsaquo;</button>
+// ════════════════════════════════
+// SCREEN: STEPS
+// ════════════════════════════════
+function renderStep(){
+  phase='steps';
+  const s=STEPS[step];
+  $('mWrap').innerHTML=`
+    <div class="step-wrap">
+      <div style="width:100%">
+        <div class="progress-track">
+          ${STEPS.map((_,i)=>`<div class="prog-seg ${i<step?'done':i===step?'active':''}"></div>`).join('')}
+        </div>
       </div>
-      <table class="mini-cal">
-        <thead><tr>${DAYS_SHORT.map(d=>`<th>${d[0]}</th>`).join('')}</tr></thead>
-        <tbody>${calRows}</tbody>
-      </table>
-    </div>
-
-    <div class="sidebar-section">
-      <div class="sidebar-heading">This Week's Programme</div>
-      ${weekPlanHTML}
-    </div>
-
-    <div class="sidebar-section">
-      <div class="sidebar-heading">Entry Streak</div>
-      <div class="streak-display">
-        <div class="streak-number">${streak}</div>
-        <div class="streak-label">consecutive days</div>
-        <div class="streak-dots">${streakDots}</div>
+      <div style="text-align:center">
+        <div class="step-counter">SCHRITT ${step+1} VON ${STEPS.length}</div>
+        <div class="step-question">${s.question}</div>
+        <div class="step-hint">${s.hint}</div>
       </div>
-    </div>
+      <div class="opts">
+        ${s.options.map((o,i)=>`
+          <div class="opt" onclick="selectOpt(${i})">
+            <div class="opt-ring"></div>
+            <div class="opt-icon">${o.icon}</div>
+            <div class="opt-label">${o.label}</div>
+            <div class="opt-sub">${o.sub}</div>
+          </div>`).join('')}
+      </div>
+    </div>`;
+  setBack(step>0 || phase!=='steps');
+}
 
-    <div class="sidebar-section">
-      <div class="sidebar-heading">Today's Dispatch</div>
-      <p class="sidebar-quote">${quotes[quoteIdx]}</p>
-    </div>
-  `;
+function selectOpt(i){
+  push();
+  step++;
+  if(step>=STEPS.length){ phase='final'; animT(renderFinal); }
+  else animT(renderStep);
+}
 
-  // Mini cal clicks
-  sidebar.querySelectorAll('.mini-cal td[data-date]').forEach(cell => {
-    cell.addEventListener('click', () => {
-      const parts = cell.dataset.date.split('-');
-      selectedDate = new Date(parseInt(parts[0]), parseInt(parts[1])-1, parseInt(parts[2]));
-      navWeekStart = getWeekStart(selectedDate);
-      renderAll();
-    });
-  });
+// ════════════════════════════════
+// SCREEN: FINAL
+// ════════════════════════════════
+function renderFinal(){
+  phase='final';
+  $('mWrap').innerHTML=`
+    <div class="final-wrap">
+      <div style="text-align:center">
+        <div class="screen-tag" style="opacity:0;animation:fUp .5s ease .1s forwards">FAST GESCHAFFT</div>
+        <div class="screen-title" style="margin-top:12px">Wie möchtest du weitermachen?</div>
+        <div class="screen-sub" style="margin-top:10px">Gib deine Empfehlung ab oder sichere dir deinen Platz mit einer Pre-Order.</div>
+      </div>
+      <div class="final-cards">
+        <div class="final-card recommend" onclick="doRecommend()">
+          <div class="fc-badge">KOSTENLOS</div>
+          <div class="fc-icon">💡</div>
+          <div><div class="fc-title">Empfehlung</div><div class="fc-desc">Stimme ab und beeinflusse das Event. Deine Wahl zählt für die finale Entscheidung.</div></div>
+          <button class="fc-btn">JETZT ABSTIMMEN →</button>
+        </div>
+        <div class="final-card preorder" onclick="doPreorder()">
+          <div class="fc-badge">PRE-ORDER</div>
+          <div class="fc-icon">🎟️</div>
+          <div><div class="fc-title">Pre-Order</div><div class="fc-desc">Sichere dir frühzeitig dein Ticket zum Vorzugspreis und sei garantiert dabei.</div></div>
+          <button class="fc-btn">TICKET SICHERN →</button>
+        </div>
+      </div>
+    </div>`;
+  setBack(true);
+}
 
-  document.getElementById('cal-prev').addEventListener('click', () => {
-    miniCalDate = new Date(miniCalDate.getFullYear(), miniCalDate.getMonth() - 1, 1);
-    renderSidebar();
-  });
-  document.getElementById('cal-next').addEventListener('click', () => {
-    miniCalDate = new Date(miniCalDate.getFullYear(), miniCalDate.getMonth() + 1, 1);
-    renderSidebar();
+// ════════════════════════════════
+// SCREEN: THANK YOU
+// ════════════════════════════════
+function doRecommend(){
+  push();
+  animT(()=>{
+    phase='thankyou';
+    $('mWrap').innerHTML=`
+      <div class="ty-wrap">
+        <div class="ty-check" style="background:rgba(62,207,142,.1);border:1.5px solid rgba(62,207,142,.3)">✓</div>
+        <div class="ty-title">DANKE<br><span style="color:var(--green)">FÜR'S VOTING!</span></div>
+        <div class="ty-body">Hey <strong>${userData.fname}</strong>, deine Stimme für <strong style="color:var(--gold)">${selectedCity}</strong> wurde gezählt. Wir werten alle Abstimmungen aus und planen das Event nach den meisten Stimmen. Du wirst benachrichtigt sobald es losgeht.</div>
+        <div class="ty-tag">DEINE STIMME ZÄHLT</div>
+      </div>`;
+    setBack(true);
   });
 }
 
-function updateMasthead() {
-  const opts = { weekday:'long', year:'numeric', month:'long', day:'numeric' };
-  document.getElementById('meta-date-short').textContent = today.toLocaleDateString('en-GB', opts);
-  document.getElementById('footer-date').textContent = 'Session: ' + new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
-  // Week number
-  const startOfYear = new Date(today.getFullYear(), 0, 1);
-  const weekNo = Math.ceil(((today - startOfYear) / 86400000 + startOfYear.getDay() + 1) / 7);
-  document.getElementById('meta-edition').textContent = `Week ${weekNo} — ${today.getFullYear()}`;
+// ════════════════════════════════
+// SCREEN: PREORDER
+// ════════════════════════════════
+function doPreorder(){ push(); animT(renderPrice); }
+
+function renderPrice(){
+  phase='price';
+  $('mWrap').innerHTML=`
+    <div class="price-wrap">
+      <div style="text-align:center">
+        <div class="screen-tag" style="opacity:0;animation:fUp .4s ease .1s forwards">PRE-ORDER — ${selectedCity}</div>
+        <div class="screen-title" style="margin-top:12px">Wähle dein Ticket</div>
+        <div class="screen-sub" style="margin-top:10px">Alle Tickets beinhalten Event-Zugang. Sichere dir deinen Platz jetzt.</div>
+      </div>
+      <div class="price-row">
+        <div class="price-card">
+          <div class="pc-tier">BASIC</div>
+          <div class="pc-name">Early Bird</div>
+          <div class="pc-price"><span class="pc-eur">€</span><span class="pc-amt">30</span></div>
+          <div class="pc-per">pro Person · Early Access</div>
+          <div class="pc-div"></div>
+          <div class="pc-feats">
+            <div class="pc-f"><span class="dot"></span>Event-Zugang</div>
+            <div class="pc-f"><span class="dot"></span>Voting-Einfluss</div>
+            <div class="pc-f"><span class="dot"></span>Frühzeitige Bestätigung</div>
+          </div>
+          <button class="pc-btn" onclick="orderDone()">JETZT BUCHEN</button>
+        </div>
+        <div class="price-card feat">
+          <div class="pc-tier">STANDARD</div>
+          <div class="pc-name">Full Experience</div>
+          <div class="pc-price"><span class="pc-eur">€</span><span class="pc-amt">30</span></div>
+          <div class="pc-per">pro Person · Most Popular</div>
+          <div class="pc-div"></div>
+          <div class="pc-feats">
+            <div class="pc-f"><span class="dot"></span>Event-Zugang</div>
+            <div class="pc-f"><span class="dot"></span>Voting-Einfluss</div>
+            <div class="pc-f"><span class="dot"></span>Welcome-Shot</div>
+            <div class="pc-f"><span class="dot"></span>Frühzeitige Bestätigung</div>
+          </div>
+          <button class="pc-btn" onclick="orderDone()">JETZT BUCHEN</button>
+        </div>
+        <div class="price-card">
+          <div class="pc-tier">PREMIUM</div>
+          <div class="pc-name">VIP Access</div>
+          <div class="pc-price"><span class="pc-eur">€</span><span class="pc-amt">30</span></div>
+          <div class="pc-per">pro Person · Limitiert</div>
+          <div class="pc-div"></div>
+          <div class="pc-feats">
+            <div class="pc-f"><span class="dot"></span>VIP Bereich</div>
+            <div class="pc-f"><span class="dot"></span>Open Bar (1h)</div>
+            <div class="pc-f"><span class="dot"></span>Exklusiver Eingang</div>
+            <div class="pc-f"><span class="dot"></span>Meet the Artists</div>
+          </div>
+          <button class="pc-btn" onclick="orderDone()">JETZT BUCHEN</button>
+        </div>
+      </div>
+      <div class="price-note">🔒 Sichere Zahlung · Keine versteckten Kosten · Stornierung bis 72h vorher</div>
+    </div>`;
+  setBack(true);
 }
 
-function renderAll() {
-  renderNav();
-  renderMain();
-  renderSidebar();
+function orderDone(){
+  $('mWrap').innerHTML=`
+    <div class="ty-wrap">
+      <div class="ty-check" style="background:rgba(240,192,96,.1);border:1.5px solid rgba(240,192,96,.35)">🎟️</div>
+      <div class="ty-title">TICKET<br><span style="color:var(--gold)">GESICHERT!</span></div>
+      <div class="ty-body">Hey <strong>${userData.party}</strong>, deine Pre-Order für <strong style="color:var(--gold)">${selectedCity}</strong> wurde entgegengenommen. Du erhältst eine Bestätigung sobald das Event bestätigt ist — bleib gespannt.</div>
+      <div class="ty-tag" style="color:var(--gold);border-color:rgba(240,192,96,.2)">PRE-ORDER AKTIV</div>
+    </div>`;
+  setBack(false);
 }
 
-document.getElementById('prev-week').addEventListener('click', () => {
-  navWeekStart.setDate(navWeekStart.getDate() - 7);
-  selectedDate = new Date(navWeekStart);
-  renderAll();
-});
-document.getElementById('next-week').addEventListener('click', () => {
-  navWeekStart.setDate(navWeekStart.getDate() + 7);
-  selectedDate = new Date(navWeekStart);
-  renderAll();
-});
-
-// Init
-updateMasthead();
-renderAll();
+// ── BOOT ──
+setTimeout(()=>{
+  const intro=document.getElementById('intro');
+  const app=document.getElementById('app');
+  intro.classList.add('exit');
+  setTimeout(()=>{
+    intro.style.display='none';
+    app.classList.add('visible');
+    renderCity();
+  },700);
+},3800);
 </script>
 </body>
-  </html>
+</html>
